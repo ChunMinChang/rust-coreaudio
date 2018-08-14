@@ -24,7 +24,7 @@ fn test_get_default_device_id() {
 #[test]
 #[should_panic(expected = "Invalid")]
 fn test_in_scope_with_invalid_id() {
-    assert_eq!(in_scope(&sys::kAudioObjectUnknown,&Scope::Input).unwrap_err(),
+    assert_eq!(in_scope(&sys::kAudioObjectUnknown, &Scope::Input).unwrap_err(),
                         Error::InvalidParameters);
     assert_eq!(in_scope(&sys::kAudioObjectUnknown, &Scope::Output).unwrap_err(),
                         Error::InvalidParameters);
