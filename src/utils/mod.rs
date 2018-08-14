@@ -184,6 +184,23 @@ pub fn get_device_source_name(id: &sys::AudioObjectID, scope: &Scope) -> Result<
     to_string(name)
 }
 
+pub fn set_default_device(id: &sys::AudioObjectID, scope: &Scope) -> Result<(), Error> {
+    if !in_scope(id, scope)? {
+        return Err(Error::InvalidParameters);
+    }
+    let default_id = get_default_device_id(scope)?;
+    if *id == default_id {
+        println!("default id: {}, new id: {}", default_id, id);
+        return Err(Error::InvalidParameters);
+    }
+    let address: &sys::AudioObjectPropertyAddress = if scope == &Scope::Input {
+        &DEFAULT_INPUT_DEVICE_PROPERTY_ADDRESS
+    } else {
+        &DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS
+    };
+    set_property_data(&sys::kAudioObjectSystemObject, address, id)
+}
+
 // Private APIs
 // ========================================================================
 fn get_device_source(id: &sys::AudioObjectID, scope: &Scope) -> Result<u32, Error> {
@@ -307,6 +324,18 @@ where
     Ok(array)
 }
 
+fn set_property_data<T> (
+    id: &sys::AudioObjectID,
+    address: &sys::AudioObjectPropertyAddress,
+    data: &T,
+) -> Result<(), Error> {
+    assert!(id != &sys::kAudioObjectUnknown, "Invalid AudioObjectID!");
+    let size = mem::size_of::<T>();
+    let status = audio_object_set_property_data::<T>(
+        id, address, &size, data);
+    convert_to_result(status)
+}
+
 fn non_empty_size(result: Result<usize, Error>) -> Result<usize, Error> {
     let value = result?;
     if value > 0 { Ok(value) } else { Err(Error::NotFound) }
@@ -362,6 +391,24 @@ fn audio_object_get_property_data_size(
             0,
             ptr::null(),
             size as *mut u32, // Cast raw usize pointer to raw u32 pointer.
+        )
+    }
+}
+
+fn audio_object_set_property_data<T>(
+    id: &sys::AudioObjectID,
+    address: &sys::AudioObjectPropertyAddress,
+    size: &usize,
+    data: *const T,
+) -> sys::OSStatus {
+    unsafe {
+        sys::AudioObjectSetPropertyData(
+            *id,
+            address, // as `*const AudioObjectPropertyAddress` automatically.
+            0,
+            ptr::null(),
+            *size as u32, // Cast usize variable to raw u32 variable.
+            data as *const c_void, // Cast raw T pointer to void pointer.
         )
     }
 }

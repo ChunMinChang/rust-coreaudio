@@ -39,6 +39,24 @@ fn to_string(scope: &utils::Scope) -> String {
     }
 }
 
+fn change_default_devices() {
+    change_default_device(&utils::Scope::Input);
+    change_default_device(&utils::Scope::Output);
+}
+
+fn change_default_device(scope: &utils::Scope) {
+    let devices = utils::get_device_ids(scope).unwrap_or(vec![]);
+    if devices.len() < 2 {
+        return;
+    }
+
+    let current_device = utils::get_default_device_id(scope).unwrap();
+    let new_device_index = devices.iter().position(|&device| device != current_device).unwrap();
+    let new_device = devices[new_device_index];
+    assert!(utils::set_default_device(&new_device, scope).is_ok());
+}
+
 fn main() {
     show_result();
+    change_default_devices();
 }
