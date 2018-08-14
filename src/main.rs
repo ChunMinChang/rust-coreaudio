@@ -51,7 +51,10 @@ fn change_default_device(scope: &utils::Scope) {
     }
 
     let current_device = utils::get_default_device_id(scope).unwrap();
-    let new_device_index = devices.iter().position(|&device| device != current_device).unwrap();
+    let new_device_index = devices
+        .iter()
+        .position(|&device| device != current_device)
+        .unwrap();
     let new_device = devices[new_device_index];
     assert!(utils::set_default_device(&new_device, scope).is_ok());
 }

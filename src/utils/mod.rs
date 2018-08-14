@@ -1,10 +1,10 @@
-extern crate coreaudio_sys as sys;
-extern crate core_foundation_sys as cf; // Force CoreFundation being built within project.
+extern crate core_foundation_sys as cf;
+extern crate coreaudio_sys as sys; // Force CoreFundation being built within project.
 
-use std::ffi::CStr; // For CStr
-use std::fmt; // For fmt::Display
-use std::mem; // For mem::uninitialized(), mem::size_of
-use std::os::raw::{c_void, c_char}; // For `void*`
+use std::ffi::CStr;                 // For CStr
+use std::fmt;                       // For fmt::Display
+use std::mem;                       // For mem::uninitialized(), mem::size_of
+use std::os::raw::{c_char, c_void}; // For `void*`
 use std::ptr; // For ptr::null()
 
 const DEVICE_NAME_PROPERTY_ADDRESS: sys::AudioObjectPropertyAddress =
@@ -67,14 +67,14 @@ const INPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS: sys::AudioObjectPropertyAddress
     sys::AudioObjectPropertyAddress {
         mSelector: sys::kAudioDevicePropertyDataSourceNameForIDCFString,
         mScope: sys::kAudioObjectPropertyScopeInput,
-        mElement: sys::kAudioObjectPropertyElementMaster
+        mElement: sys::kAudioObjectPropertyElementMaster,
     };
 
 const OUTPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS: sys::AudioObjectPropertyAddress =
     sys::AudioObjectPropertyAddress {
         mSelector: sys::kAudioDevicePropertyDataSourceNameForIDCFString,
         mScope: sys::kAudioObjectPropertyScopeOutput,
-        mElement: sys::kAudioObjectPropertyElementMaster
+        mElement: sys::kAudioObjectPropertyElementMaster,
     };
 
 #[derive(PartialEq)] // Enable comparison.
@@ -110,8 +110,8 @@ pub fn get_default_device_id(scope: &Scope) -> Result<sys::AudioObjectID, Error>
     } else {
         &DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS
     };
-    let id: sys::AudioObjectID = get_property_data::<sys::AudioObjectID>(
-        &sys::kAudioObjectSystemObject, address)?;
+    let id: sys::AudioObjectID =
+        get_property_data::<sys::AudioObjectID>(&sys::kAudioObjectSystemObject, address)?;
     if id == sys::kAudioObjectUnknown {
         Err(Error::NotFound)
     } else {
@@ -138,26 +138,31 @@ pub fn get_device_ids(scope: &Scope) -> Result<Vec<sys::AudioObjectID>, Error> {
     Ok(devices_in_scope)
 }
 
-
 pub fn get_all_device_ids() -> Result<Vec<sys::AudioObjectID>, Error> {
     let ids: Vec<sys::AudioObjectID> = get_property_array::<sys::AudioObjectID>(
-        &sys::kAudioObjectSystemObject, &DEVICE_PROPERTY_ADDRESS)?;
+        &sys::kAudioObjectSystemObject,
+        &DEVICE_PROPERTY_ADDRESS,
+    )?;
     Ok(ids)
 }
 
 pub fn get_device_label(id: &sys::AudioObjectID, scope: &Scope) -> Result<String, Error> {
     match get_device_source_name(id, scope) {
-        Ok(name) => { Ok(name) },
+        Ok(name) => Ok(name),
         Err(_) => {
             let id_in_scope = in_scope(id, scope)?; // Check if the id is in scope.
-            if id_in_scope { get_device_name(id) } else { Err(Error::NotFound) }
+            if id_in_scope {
+                get_device_name(id)
+            } else {
+                Err(Error::NotFound)
+            }
         }
     }
 }
 
 pub fn get_device_name(id: &sys::AudioObjectID) -> Result<String, Error> {
-    let name: sys::CFStringRef = get_property_data::<sys::CFStringRef>(
-        id, &DEVICE_NAME_PROPERTY_ADDRESS)?;
+    let name: sys::CFStringRef =
+        get_property_data::<sys::CFStringRef>(id, &DEVICE_NAME_PROPERTY_ADDRESS)?;
     to_string(name)
 }
 
@@ -221,7 +226,7 @@ fn number_of_streams(id: &sys::AudioObjectID, scope: &Scope) -> Result<usize, Er
 
 fn to_string(cf_string_ref: sys::CFStringRef) -> Result<String, Error> {
     assert!(!cf_string_ref.is_null());
-    let buffer:Vec<c_char> = get_btye_array(cf_string_ref)?;
+    let buffer: Vec<c_char> = get_btye_array(cf_string_ref)?;
     btye_array_to_string(buffer)
 }
 
@@ -230,21 +235,29 @@ fn get_btye_array(cf_string_ref: sys::CFStringRef) -> Result<Vec<c_char>, Error>
     if length <= 0 {
         return Err(Error::ConversionFailed);
     }
-    let size: sys::CFIndex = unsafe { sys::CFStringGetMaximumSizeForEncoding(
-        length, sys::kCFStringEncodingUTF8) } + 1;
+    let size: sys::CFIndex =
+        unsafe { sys::CFStringGetMaximumSizeForEncoding(length, sys::kCFStringEncodingUTF8) } + 1;
     let mut buffer = Vec::<c_char>::with_capacity(size as usize);
     let success: bool = unsafe {
         buffer.set_len(size as usize);
         let result: sys::Boolean = sys::CFStringGetCString(
-            cf_string_ref, buffer.as_mut_ptr(), size, sys::kCFStringEncodingUTF8);
+            cf_string_ref,
+            buffer.as_mut_ptr(),
+            size,
+            sys::kCFStringEncodingUTF8,
+        );
         sys::CFRelease(cf_string_ref as *mut c_void);
         result != 0 // sys::Boolean is u8, so compare with 0 to get bool.
     };
-    if success { Ok(buffer) } else { return Err(Error::ConversionFailed); }
+    if success {
+        Ok(buffer)
+    } else {
+        return Err(Error::ConversionFailed);
+    }
 }
 
 fn btye_array_to_string(mut buffer: Vec<c_char>) -> Result<String, Error> {
-    // CStr::from_ptr will call strlen to trim the array first:
+    // CStr::from_ptr will call strlen to trim the array first. See:
     // https://doc.rust-lang.org/src/std/ffi/c_str.rs.html#935-939
     let c_str: &CStr = unsafe { CStr::from_ptr(buffer.as_mut_ptr()) };
     let str_slice: &str = match c_str.to_str() {
@@ -269,7 +282,7 @@ fn btye_array_to_string(mut buffer: Vec<c_char>) -> Result<String, Error> {
 //     Ok(data)
 // }
 
-fn get_property_data<T> (
+fn get_property_data<T>(
     id: &sys::AudioObjectID,
     address: &sys::AudioObjectPropertyAddress,
 ) -> Result<T, Error> {
@@ -280,7 +293,7 @@ fn get_property_data<T> (
     Ok(data)
 }
 
-fn get_property_data_with_ptr<T> (
+fn get_property_data_with_ptr<T>(
     id: &sys::AudioObjectID,
     address: &sys::AudioObjectPropertyAddress,
     data: &mut T,
@@ -288,54 +301,58 @@ fn get_property_data_with_ptr<T> (
     assert!(id != &sys::kAudioObjectUnknown, "Invalid AudioObjectID!");
     let mut size = mem::size_of::<T>();
     // debug_assert_eq!(size, get_property_data_size(id, address)?);
-    let status = audio_object_get_property_data::<T>(
-        id, address, &mut size, data);
+    let status = audio_object_get_property_data::<T>(id, address, &mut size, data);
     convert_to_result(status)
 }
 
-fn get_property_data_size (
+fn get_property_data_size(
     id: &sys::AudioObjectID,
     address: &sys::AudioObjectPropertyAddress,
 ) -> Result<usize, Error> {
     assert!(id != &sys::kAudioObjectUnknown, "Invalid AudioObjectID!");
-    let mut size  = 0;
+    let mut size = 0;
     let status = audio_object_get_property_data_size(id, address, &mut size);
     convert_to_result(status)?;
     Ok(size)
 }
 
-fn get_property_array<T> (
+fn get_property_array<T>(
     id: &sys::AudioObjectID,
     address: &sys::AudioObjectPropertyAddress,
 ) -> Result<Vec<T>, Error>
 where
-    T: Sized {
+    T: Sized,
+{
     assert!(id != &sys::kAudioObjectUnknown, "Invalid AudioObjectID!");
     let mut size = non_empty_size(get_property_data_size(id, address))?;
     let elements = size / mem::size_of::<T>();
     let mut array = Vec::<T>::with_capacity(elements);
-    unsafe { array.set_len(elements); }
-    let status = audio_object_get_property_data::<T>(
-        id, address, &mut size, array.as_mut_ptr());
+    unsafe {
+        array.set_len(elements);
+    }
+    let status = audio_object_get_property_data::<T>(id, address, &mut size, array.as_mut_ptr());
     convert_to_result(status)?;
     Ok(array)
 }
 
-fn set_property_data<T> (
+fn set_property_data<T>(
     id: &sys::AudioObjectID,
     address: &sys::AudioObjectPropertyAddress,
     data: &T,
 ) -> Result<(), Error> {
     assert!(id != &sys::kAudioObjectUnknown, "Invalid AudioObjectID!");
     let size = mem::size_of::<T>();
-    let status = audio_object_set_property_data::<T>(
-        id, address, &size, data);
+    let status = audio_object_set_property_data::<T>(id, address, &size, data);
     convert_to_result(status)
 }
 
 fn non_empty_size(result: Result<usize, Error>) -> Result<usize, Error> {
     let value = result?;
-    if value > 0 { Ok(value) } else { Err(Error::NotFound) }
+    if value > 0 {
+        Ok(value)
+    } else {
+        Err(Error::NotFound)
+    }
 }
 
 fn convert_to_result(status: sys::OSStatus) -> Result<(), Error> {
@@ -370,7 +387,7 @@ fn audio_object_get_property_data<T>(
             address, // as `*const AudioObjectPropertyAddress` automatically.
             0,
             ptr::null(),
-            size as *mut u32, // Cast raw usize pointer to raw u32 pointer.
+            size as *mut u32,    // Cast raw usize pointer to raw u32 pointer.
             data as *mut c_void, // Cast raw T pointer to void pointer.
         )
     }
@@ -404,7 +421,7 @@ fn audio_object_set_property_data<T>(
             address, // as `*const AudioObjectPropertyAddress` automatically.
             0,
             ptr::null(),
-            *size as u32, // Cast usize variable to raw u32 variable.
+            *size as u32,          // Cast usize variable to raw u32 variable.
             data as *const c_void, // Cast raw T pointer to void pointer.
         )
     }
