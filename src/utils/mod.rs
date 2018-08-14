@@ -77,17 +77,14 @@ const OUTPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS: sys::AudioObjectPropertyAddres
         mElement: sys::kAudioObjectPropertyElementMaster
     };
 
-// #[repr(C)] // Specify data layout in the same way as C does.
 #[derive(PartialEq)] // Enable comparison.
 pub enum Scope {
     Input,
     Output,
 }
 
-// #[repr(C)] // Specify data layout in the same way as C does.
 #[derive(Debug, PartialEq)] // Using Debug for std::fmt::Debug.
 pub enum Error {
-    // NoError,
     NotFound,
     InvalidParameters,
     ConversionFailed,
