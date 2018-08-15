@@ -295,11 +295,10 @@ fn test_change_default_device(scope: &Scope) {
     }
 
     let current_device = get_default_device_id(scope).unwrap();
-    let new_device_index = devices
+    let new_device = devices
         .iter()
-        .position(|&device| device != current_device)
+        .find(|&device| device != &current_device)
         .unwrap();
-    let new_device = devices[new_device_index];
     assert!(set_default_device(&new_device, scope).is_ok());
 }
 
