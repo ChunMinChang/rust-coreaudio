@@ -5,7 +5,7 @@ use std::ffi::CStr;                 // For CStr
 use std::fmt;                       // For fmt::Display
 use std::mem;                       // For mem::uninitialized(), mem::size_of
 use std::os::raw::{c_char, c_void}; // For `void*`
-use std::ptr; // For ptr::null()
+use std::ptr;                       // For ptr::null()
 
 const DEVICE_NAME_PROPERTY_ADDRESS: sys::AudioObjectPropertyAddress =
     sys::AudioObjectPropertyAddress {
@@ -115,8 +115,8 @@ pub fn get_default_device_id(scope: &Scope) -> Result<sys::AudioObjectID, Error>
     };
     let id: sys::AudioObjectID =
         get_property_data::<sys::AudioObjectID>(&sys::kAudioObjectSystemObject, address)?;
-    // id will be kAudioObjectUnknown when there is no valid device,
-    // so we check it before returning it.
+    // `id` will be kAudioObjectUnknown when there is no valid device, so we
+    // check it before returning it.
     if id == sys::kAudioObjectUnknown {
         Err(Error::NotFound)
     } else {
@@ -255,7 +255,7 @@ fn get_btye_array(cf_string_ref: sys::CFStringRef) -> Result<Vec<c_char>, Error>
             sys::kCFStringEncodingUTF8,
         );
         sys::CFRelease(cf_string_ref as *mut c_void);
-        result != 0 // sys::Boolean is u8, so compare with 0 to get bool.
+        result != 0 // sys::Boolean is u8. Returing a bool by comparing with 0.
     };
     if success {
         Ok(buffer)
@@ -276,20 +276,6 @@ fn btye_array_to_string(mut buffer: Vec<c_char>) -> Result<String, Error> {
     Ok(str_buf)
 }
 
-// fn get_property_data<T> (
-//     id: &sys::AudioObjectID,
-//     address: &sys::AudioObjectPropertyAddress,
-// ) -> Result<T, Error> {
-//     assert!(id != &sys::kAudioObjectUnknown, "Invalid AudioObjectID!");
-//     let mut size = mem::size_of::<T>();
-//     // Use `mem::uninitialized()` to bypasses memory-initialization checks.
-//     let mut data: T = unsafe { mem::uninitialized() };
-//     let status = audio_object_get_property_data::<T>(
-//         id, address, &mut size, &mut data);
-//     convert_to_result(status)?;
-//     Ok(data)
-// }
-
 fn get_property_data<T>(
     id: &sys::AudioObjectID,
     address: &sys::AudioObjectPropertyAddress,
@@ -308,7 +294,7 @@ fn get_property_data_with_ptr<T>(
 ) -> Result<(), Error> {
     assert!(id != &sys::kAudioObjectUnknown, "Invalid AudioObjectID!");
     let mut size = mem::size_of::<T>();
-    // debug_assert_eq!(size, get_property_data_size(id, address)?);
+    debug_assert_eq!(size, get_property_data_size(id, address)?);
     let status = audio_object_get_property_data::<T>(id, address, &mut size, data);
     convert_to_result(status)
 }
