@@ -188,6 +188,8 @@ fn test_get_device_source_name_with_invalid_scope() {
 
 #[test]
 fn test_get_device_source_name() {
+    // Even we have default input/output devices, we may not get the source
+    // names of the devices.
     if let Ok(id) = get_default_device_id(&Scope::Input) {
         assert_ne!(id, sys::kAudioObjectUnknown);
         match get_device_source_name(&id, &Scope::Input) {
@@ -228,8 +230,9 @@ fn test_set_default_device_with_invalid_id() {
     );
 }
 
-// test_set_default_device_with_same_device() will be interfered with
+// NOTICE: test_set_default_device_with_same_device() will be interfered with
 // test_set_default_device() when running test in parallel threads.
+//
 // Suppose we have two threads, 1 and 2:
 // - test_set_default_device_with_same_device() runs on thread 1
 // - test_set_default_device() runs on thread 2
