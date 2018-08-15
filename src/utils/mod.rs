@@ -133,17 +133,11 @@ pub fn in_scope(id: &sys::AudioObjectID, scope: &Scope) -> Result<bool, Error> {
 // need to get all the devices first ans then check if they are input or output
 // ony by one.
 pub fn get_device_ids(scope: &Scope) -> Result<Vec<sys::AudioObjectID>, Error> {
-    // let mut devices: Vec<sys::AudioObjectID> = get_all_device_ids()?;
-    // devices.retain(|&device| in_scope(&device, scope).unwrap());
-    // Ok(devices)
-    let devices: Vec<sys::AudioObjectID> = get_all_device_ids()?;
-    let mut devices_in_scope: Vec<sys::AudioObjectID> = Vec::new();
-    for device in &devices {
-        if in_scope(&device, scope)? {
-            devices_in_scope.push(device.clone());
-        }
-    }
-    Ok(devices_in_scope)
+    let mut devices: Vec<sys::AudioObjectID> = get_all_device_ids()?;
+    // It's ok to call `unwrap()` here since all the `sys::AudioObjectID` values
+    // in `devices` are valid.
+    devices.retain(|&device| in_scope(&device, scope).unwrap());
+    Ok(devices)
 }
 
 pub fn get_all_device_ids() -> Result<Vec<sys::AudioObjectID>, Error> {
