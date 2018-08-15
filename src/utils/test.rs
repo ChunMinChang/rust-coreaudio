@@ -359,17 +359,15 @@ fn test_get_device_source() {
     // If we can get source from input/output devices, then they must be non-zero values.
     if let Ok(id) = get_default_device_id(&Scope::Input) {
         assert_ne!(id, sys::kAudioObjectUnknown);
-        match get_device_source(&id, &Scope::Input) {
-            Ok(source) => assert_ne!(source, 0),
-            _ => {}
+        if let Ok(source) = get_device_source(&id, &Scope::Input) {
+            assert_ne!(source, 0);
         }
     }
 
     if let Ok(id) = get_default_device_id(&Scope::Output) {
         assert_ne!(id, sys::kAudioObjectUnknown);
-        match get_device_source(&id, &Scope::Output) {
-            Ok(source) => assert_ne!(source, 0),
-            _ => {}
+        if let Ok(source) = get_device_source(&id, &Scope::Output) {
+            assert_ne!(source, 0);
         }
     }
 }
