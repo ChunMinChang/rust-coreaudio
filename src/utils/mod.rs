@@ -77,12 +77,15 @@ const OUTPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS: sys::AudioObjectPropertyAddres
         mElement: sys::kAudioObjectPropertyElementMaster,
     };
 
+// TODO: Maybe we should move this enum out since other module may also
+//       need the scope.
 #[derive(PartialEq)] // Enable comparison.
 pub enum Scope {
     Input,
     Output,
 }
 
+// TODO: Give more meaningful error messages.
 #[derive(Debug, PartialEq)] // Using Debug for std::fmt::Debug.
 pub enum Error {
     NotFound,
@@ -112,6 +115,8 @@ pub fn get_default_device_id(scope: &Scope) -> Result<sys::AudioObjectID, Error>
     };
     let id: sys::AudioObjectID =
         get_property_data::<sys::AudioObjectID>(&sys::kAudioObjectSystemObject, address)?;
+    // id will be kAudioObjectUnknown when there is no valid device,
+    // so we check it before returning it.
     if id == sys::kAudioObjectUnknown {
         Err(Error::NotFound)
     } else {
@@ -124,6 +129,9 @@ pub fn in_scope(id: &sys::AudioObjectID, scope: &Scope) -> Result<bool, Error> {
     Ok(streams > 0)
 }
 
+// Apple has no API to get input-only or output-only devices. To do that, we
+// need to get all the devices first ans then check if they are input or output
+// ony by one.
 pub fn get_device_ids(scope: &Scope) -> Result<Vec<sys::AudioObjectID>, Error> {
     // let mut devices: Vec<sys::AudioObjectID> = get_all_device_ids()?;
     // devices.retain(|&device| in_scope(&device, scope).unwrap());
@@ -187,6 +195,12 @@ pub fn get_device_source_name(id: &sys::AudioObjectID, scope: &Scope) -> Result<
 }
 
 pub fn set_default_device(id: &sys::AudioObjectID, scope: &Scope) -> Result<(), Error> {
+    // Surprisingly it's ok to set
+    //   1. a unknown device
+    //   2. a non-input/non-output device
+    //   3. the current default input/output device
+    // as the new default input/output device by apple's API.
+    // We need to check the above things by ourselves.
     if !in_scope(id, scope)? {
         return Err(Error::InvalidParameters);
     }
