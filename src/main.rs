@@ -2,12 +2,12 @@ extern crate rust_coreaudio;
 use rust_coreaudio::utils; // Refer to `utils` module
 
 fn show_result() {
-    for id in &utils::get_all_device_ids().unwrap() {
+    for id in utils::get_all_device_ids().unwrap() {
         show_device_info(id);
     }
 }
 
-fn show_device_info(id: &u32) {
+fn show_device_info(id: u32) {
     print!("Device {}: ", id);
     let mut info: String = String::from("");
     let scopes = vec![utils::Scope::Input, utils::Scope::Output];
@@ -23,9 +23,9 @@ fn show_device_info(id: &u32) {
     println!("{}", info);
 }
 
-fn get_device_info(id: &u32, scope: &utils::Scope) -> String {
+fn get_device_info(id: u32, scope: &utils::Scope) -> String {
     let default_id = utils::get_default_device_id(scope).unwrap();
-    let mut info = String::from(if id == &default_id { "(default " } else { "(" });
+    let mut info = String::from(if id == default_id { "(default " } else { "(" });
     info += (to_string(scope) + ") ").as_ref();
     info += utils::get_device_label(id, scope).unwrap().as_ref();
     info
@@ -52,10 +52,10 @@ fn change_default_device(scope: &utils::Scope) {
 
     let current_device = utils::get_default_device_id(scope).unwrap();
     let new_device = devices
-        .iter()
-        .find(|&device| device != &current_device)
+        .into_iter()
+        .find(|&device| device != current_device)
         .unwrap();
-    assert!(utils::set_default_device(&new_device, scope).is_ok());
+    assert!(utils::set_default_device(new_device, scope).is_ok());
 }
 
 fn main() {

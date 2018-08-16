@@ -114,7 +114,7 @@ pub fn get_default_device_id(scope: &Scope) -> Result<sys::AudioObjectID, Error>
         &DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS
     };
     let id: sys::AudioObjectID =
-        get_property_data::<sys::AudioObjectID>(&sys::kAudioObjectSystemObject, address)?;
+        get_property_data::<sys::AudioObjectID>(sys::kAudioObjectSystemObject, address)?;
     // `id` will be kAudioObjectUnknown when there is no valid device, so we
     // check it before returning it.
     if id == sys::kAudioObjectUnknown {
@@ -124,7 +124,7 @@ pub fn get_default_device_id(scope: &Scope) -> Result<sys::AudioObjectID, Error>
     }
 }
 
-pub fn in_scope(id: &sys::AudioObjectID, scope: &Scope) -> Result<bool, Error> {
+pub fn in_scope(id: sys::AudioObjectID, scope: &Scope) -> Result<bool, Error> {
     let streams = number_of_streams(id, scope)?;
     Ok(streams > 0)
 }
@@ -136,19 +136,19 @@ pub fn get_device_ids(scope: &Scope) -> Result<Vec<sys::AudioObjectID>, Error> {
     let mut devices: Vec<sys::AudioObjectID> = get_all_device_ids()?;
     // It's ok to call `unwrap()` here since all the `sys::AudioObjectID` values
     // in `devices` are valid.
-    devices.retain(|&device| in_scope(&device, scope).unwrap());
+    devices.retain(|&device| in_scope(device, scope).unwrap());
     Ok(devices)
 }
 
 pub fn get_all_device_ids() -> Result<Vec<sys::AudioObjectID>, Error> {
     let ids: Vec<sys::AudioObjectID> = get_property_array::<sys::AudioObjectID>(
-        &sys::kAudioObjectSystemObject,
+        sys::kAudioObjectSystemObject,
         &DEVICE_PROPERTY_ADDRESS,
     )?;
     Ok(ids)
 }
 
-pub fn get_device_label(id: &sys::AudioObjectID, scope: &Scope) -> Result<String, Error> {
+pub fn get_device_label(id: sys::AudioObjectID, scope: &Scope) -> Result<String, Error> {
     match get_device_source_name(id, scope) {
         Ok(name) => Ok(name),
         Err(_) => {
@@ -162,7 +162,7 @@ pub fn get_device_label(id: &sys::AudioObjectID, scope: &Scope) -> Result<String
     }
 }
 
-pub fn get_device_name(id: &sys::AudioObjectID) -> Result<String, Error> {
+pub fn get_device_name(id: sys::AudioObjectID) -> Result<String, Error> {
     let name: sys::CFStringRef =
         get_property_data::<sys::CFStringRef>(id, &DEVICE_NAME_PROPERTY_ADDRESS)?;
     to_string(name)
@@ -171,7 +171,7 @@ pub fn get_device_name(id: &sys::AudioObjectID) -> Result<String, Error> {
     //       pointer.
 }
 
-pub fn get_device_source_name(id: &sys::AudioObjectID, scope: &Scope) -> Result<String, Error> {
+pub fn get_device_source_name(id: sys::AudioObjectID, scope: &Scope) -> Result<String, Error> {
     let mut source: u32 = get_device_source(id, scope)?;
     let mut name: sys::CFStringRef = ptr::null();
 
@@ -194,7 +194,7 @@ pub fn get_device_source_name(id: &sys::AudioObjectID, scope: &Scope) -> Result<
     //       pointer.
 }
 
-pub fn set_default_device(id: &sys::AudioObjectID, scope: &Scope) -> Result<(), Error> {
+pub fn set_default_device(id: sys::AudioObjectID, scope: &Scope) -> Result<(), Error> {
     // Surprisingly it's ok to set
     //   1. a unknown device
     //   2. a non-input/non-output device
@@ -205,7 +205,7 @@ pub fn set_default_device(id: &sys::AudioObjectID, scope: &Scope) -> Result<(), 
         return Err(Error::InvalidParameters);
     }
     let default_id = get_default_device_id(scope)?;
-    if *id == default_id {
+    if id == default_id {
         println!("default id: {}, new id: {}", default_id, id);
         return Err(Error::InvalidParameters);
     }
@@ -214,12 +214,12 @@ pub fn set_default_device(id: &sys::AudioObjectID, scope: &Scope) -> Result<(), 
     } else {
         &DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS
     };
-    set_property_data(&sys::kAudioObjectSystemObject, address, id)
+    set_property_data(sys::kAudioObjectSystemObject, address, &id)
 }
 
 // Private APIs
 // ========================================================================
-fn get_device_source(id: &sys::AudioObjectID, scope: &Scope) -> Result<u32, Error> {
+fn get_device_source(id: sys::AudioObjectID, scope: &Scope) -> Result<u32, Error> {
     let address: &sys::AudioObjectPropertyAddress = if scope == &Scope::Input {
         &INPUT_DEVICE_SOURCE_PROPERTY_ADDRESS
     } else {
@@ -228,7 +228,7 @@ fn get_device_source(id: &sys::AudioObjectID, scope: &Scope) -> Result<u32, Erro
     get_property_data::<u32>(id, address)
 }
 
-fn number_of_streams(id: &sys::AudioObjectID, scope: &Scope) -> Result<usize, Error> {
+fn number_of_streams(id: sys::AudioObjectID, scope: &Scope) -> Result<usize, Error> {
     let address: &sys::AudioObjectPropertyAddress = if scope == &Scope::Input {
         &INPUT_DEVICE_STREAMS_PROPERTY_ADDRESS
     } else {
@@ -266,7 +266,7 @@ fn get_btye_array(cf_string_ref: sys::CFStringRef) -> Result<Vec<c_char>, Error>
     if success {
         Ok(buffer)
     } else {
-        return Err(Error::ConversionFailed);
+        Err(Error::ConversionFailed)
     }
 }
 
@@ -283,10 +283,10 @@ fn btye_array_to_string(mut buffer: Vec<c_char>) -> Result<String, Error> {
 }
 
 fn get_property_data<T>(
-    id: &sys::AudioObjectID,
+    id: sys::AudioObjectID,
     address: &sys::AudioObjectPropertyAddress,
 ) -> Result<T, Error> {
-    assert!(id != &sys::kAudioObjectUnknown, "Invalid AudioObjectID!");
+    assert!(id != sys::kAudioObjectUnknown, "Invalid AudioObjectID!");
     // Use `mem::uninitialized()` to bypasses memory-initialization checks.
     let mut data: T = unsafe { mem::uninitialized() };
     get_property_data_with_ptr(id, address, &mut data)?;
@@ -294,11 +294,11 @@ fn get_property_data<T>(
 }
 
 fn get_property_data_with_ptr<T>(
-    id: &sys::AudioObjectID,
+    id: sys::AudioObjectID,
     address: &sys::AudioObjectPropertyAddress,
     data: &mut T,
 ) -> Result<(), Error> {
-    assert!(id != &sys::kAudioObjectUnknown, "Invalid AudioObjectID!");
+    assert!(id != sys::kAudioObjectUnknown, "Invalid AudioObjectID!");
     let mut size = mem::size_of::<T>();
     debug_assert_eq!(size, get_property_data_size(id, address)?);
     let status = audio_object_get_property_data::<T>(id, address, &mut size, data);
@@ -306,10 +306,10 @@ fn get_property_data_with_ptr<T>(
 }
 
 fn get_property_data_size(
-    id: &sys::AudioObjectID,
+    id: sys::AudioObjectID,
     address: &sys::AudioObjectPropertyAddress,
 ) -> Result<usize, Error> {
-    assert!(id != &sys::kAudioObjectUnknown, "Invalid AudioObjectID!");
+    assert!(id != sys::kAudioObjectUnknown, "Invalid AudioObjectID!");
     let mut size = 0;
     let status = audio_object_get_property_data_size(id, address, &mut size);
     convert_to_result(status)?;
@@ -317,13 +317,13 @@ fn get_property_data_size(
 }
 
 fn get_property_array<T>(
-    id: &sys::AudioObjectID,
+    id: sys::AudioObjectID,
     address: &sys::AudioObjectPropertyAddress,
 ) -> Result<Vec<T>, Error>
 where
     T: Sized,
 {
-    assert!(id != &sys::kAudioObjectUnknown, "Invalid AudioObjectID!");
+    assert!(id != sys::kAudioObjectUnknown, "Invalid AudioObjectID!");
     let mut size = non_empty_size(get_property_data_size(id, address))?;
     let elements = size / mem::size_of::<T>();
     let mut array = Vec::<T>::with_capacity(elements);
@@ -336,13 +336,13 @@ where
 }
 
 fn set_property_data<T>(
-    id: &sys::AudioObjectID,
+    id: sys::AudioObjectID,
     address: &sys::AudioObjectPropertyAddress,
     data: &T,
 ) -> Result<(), Error> {
-    assert!(id != &sys::kAudioObjectUnknown, "Invalid AudioObjectID!");
+    assert!(id != sys::kAudioObjectUnknown, "Invalid AudioObjectID!");
     let size = mem::size_of::<T>();
-    let status = audio_object_set_property_data::<T>(id, address, &size, data);
+    let status = audio_object_set_property_data::<T>(id, address, size, data);
     convert_to_result(status)
 }
 
@@ -376,14 +376,14 @@ fn to_bindgen_type(status: sys::OSStatus) -> BindgenOsstatus {
 }
 
 fn audio_object_get_property_data<T>(
-    id: &sys::AudioObjectID,
+    id: sys::AudioObjectID,
     address: &sys::AudioObjectPropertyAddress,
     size: *mut usize,
     data: *mut T,
 ) -> sys::OSStatus {
     unsafe {
         sys::AudioObjectGetPropertyData(
-            *id,
+            id,
             address, // as `*const AudioObjectPropertyAddress` automatically.
             0,
             ptr::null(),
@@ -394,13 +394,13 @@ fn audio_object_get_property_data<T>(
 }
 
 fn audio_object_get_property_data_size(
-    id: &sys::AudioObjectID,
+    id: sys::AudioObjectID,
     address: &sys::AudioObjectPropertyAddress,
     size: *mut usize,
 ) -> sys::OSStatus {
     unsafe {
         sys::AudioObjectGetPropertyDataSize(
-            *id,
+            id,
             address, // as `*const AudioObjectPropertyAddress` automatically.
             0,
             ptr::null(),
@@ -410,18 +410,18 @@ fn audio_object_get_property_data_size(
 }
 
 fn audio_object_set_property_data<T>(
-    id: &sys::AudioObjectID,
+    id: sys::AudioObjectID,
     address: &sys::AudioObjectPropertyAddress,
-    size: &usize,
+    size: usize,
     data: *const T,
 ) -> sys::OSStatus {
     unsafe {
         sys::AudioObjectSetPropertyData(
-            *id,
+            id,
             address, // as `*const AudioObjectPropertyAddress` automatically.
             0,
             ptr::null(),
-            *size as u32,          // Cast usize variable to raw u32 variable.
+            size as u32,          // Cast usize variable to raw u32 variable.
             data as *const c_void, // Cast raw T pointer to void pointer.
         )
     }
