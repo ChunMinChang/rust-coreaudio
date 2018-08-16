@@ -166,6 +166,9 @@ pub fn get_device_name(id: &sys::AudioObjectID) -> Result<String, Error> {
     let name: sys::CFStringRef =
         get_property_data::<sys::CFStringRef>(id, &DEVICE_NAME_PROPERTY_ADDRESS)?;
     to_string(name)
+    // TODO: The memory pointed by `name` will be free in to_string(...).
+    //       Find a way to move `name` to prevent it from being a dangling
+    //       pointer.
 }
 
 pub fn get_device_source_name(id: &sys::AudioObjectID, scope: &Scope) -> Result<String, Error> {
@@ -186,6 +189,9 @@ pub fn get_device_source_name(id: &sys::AudioObjectID, scope: &Scope) -> Result<
     };
     get_property_data_with_ptr(id, address, &mut translation)?;
     to_string(name)
+    // TODO: The memory pointed by `name` will be free in to_string(...).
+    //       Find a way to move `name` to prevent it from being a dangling
+    //       pointer.
 }
 
 pub fn set_default_device(id: &sys::AudioObjectID, scope: &Scope) -> Result<(), Error> {
