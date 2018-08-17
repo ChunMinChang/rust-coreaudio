@@ -206,7 +206,6 @@ pub fn set_default_device(id: sys::AudioObjectID, scope: &Scope) -> Result<(), E
     }
     let default_id = get_default_device_id(scope)?;
     if id == default_id {
-        println!("default id: {}, new id: {}", default_id, id);
         return Err(Error::InvalidParameters);
     }
     let address: &sys::AudioObjectPropertyAddress = if scope == &Scope::Input {
