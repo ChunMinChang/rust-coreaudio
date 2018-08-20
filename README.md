@@ -15,6 +15,4 @@ If ```set_default_device``` in *utils* module is called by two different threads
 The underlying system API of ```set_default_device``` is ```AudioObjectSetPropertyData```. We should prevent it from being called with the same ```AudioObjectID``` at the same time. In the above case, the ```set_default_device``` will call ```AudioObjectSetPropertyData(kAudioObjectSystemObject, ...)```, so the device setting for ```kAudioObjectSystemObject``` will be changed at the same time by two threads and lead to a random result.
 
 ## TO-DO
-- Try using *static mutable borrow* in different threads
-- Know hot to write *singleton* pattern in *Rust*
-- Try writing a thread-safe struct
+- Consider creating a strcut named *AudioObject* with a ```AudioObjectID``` member and implement a *read-write lock* on its setters and getters.
