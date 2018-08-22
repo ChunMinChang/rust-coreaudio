@@ -20,15 +20,15 @@ fn test_get_default_device_id() {
 // in_scope
 // ------------------------------------
 #[test]
-#[should_panic(expected = "Invalid")]
+// #[should_panic(expected = "Bad")]
 fn test_in_scope_with_invalid_id() {
     assert_eq!(
         in_scope(sys::kAudioObjectUnknown, &Scope::Input).unwrap_err(),
-        Error::InvalidParameters
+        Error::InvalidParameters(audio_object::Error::BadObject)
     );
     assert_eq!(
         in_scope(sys::kAudioObjectUnknown, &Scope::Output).unwrap_err(),
-        Error::InvalidParameters
+        Error::InvalidParameters(audio_object::Error::BadObject)
     );
 }
 
@@ -63,7 +63,8 @@ fn test_get_device_ids() {
 #[test]
 fn test_get_all_device_ids() {
     if get_default_device_id(&Scope::Input).is_ok() ||
-       get_default_device_id(&Scope::Output).is_ok() {
+       get_default_device_id(&Scope::Output).is_ok()
+    {
         assert!(!get_all_device_ids().unwrap().is_empty());
     }
 }
@@ -71,15 +72,15 @@ fn test_get_all_device_ids() {
 // get_device_label
 // ------------------------------------
 #[test]
-#[should_panic(expected = "Invalid")]
+// #[should_panic(expected = "Bad")]
 fn test_get_device_label_with_invalid_id() {
     assert_eq!(
         get_device_label(sys::kAudioObjectUnknown, &Scope::Input).unwrap_err(),
-        Error::InvalidParameters
+        Error::InvalidParameters(audio_object::Error::BadObject)
     );
     assert_eq!(
         get_device_label(sys::kAudioObjectUnknown, &Scope::Output).unwrap_err(),
-        Error::InvalidParameters
+        Error::InvalidParameters(audio_object::Error::BadObject)
     );
 }
 
@@ -91,7 +92,7 @@ fn test_get_device_label_with_invalid_scope() {
         if !is_output {
             assert_eq!(
                 get_device_label(id, &Scope::Output).unwrap_err(),
-                Error::NotFound
+                Error::WrongScope
             );
         }
     }
@@ -102,7 +103,7 @@ fn test_get_device_label_with_invalid_scope() {
         if !is_input {
             assert_eq!(
                 get_device_label(id, &Scope::Input).unwrap_err(),
-                Error::NotFound
+                Error::WrongScope
             );
         }
     }
@@ -124,11 +125,11 @@ fn test_get_device_label() {
 // get_device_name
 // ------------------------------------
 #[test]
-#[should_panic(expected = "Invalid")]
+// #[should_panic(expected = "Bad")]
 fn test_get_device_name_with_invalid_id() {
     assert_eq!(
         get_device_name(sys::kAudioObjectUnknown).unwrap_err(),
-        Error::InvalidParameters
+        Error::InvalidParameters(audio_object::Error::BadObject)
     );
 }
 
@@ -149,15 +150,15 @@ fn test_get_device_name() {
 // get_device_source_name
 // ------------------------------------
 #[test]
-#[should_panic(expected = "Invalid")]
+// #[should_panic(expected = "Bad")]
 fn test_get_device_source_name_with_invalid_id() {
     assert_eq!(
         get_device_source_name(sys::kAudioObjectUnknown, &Scope::Input,).unwrap_err(),
-        Error::InvalidParameters
+        Error::InvalidParameters(audio_object::Error::BadObject)
     );
     assert_eq!(
         get_device_source_name(sys::kAudioObjectUnknown, &Scope::Output,).unwrap_err(),
-        Error::InvalidParameters
+        Error::InvalidParameters(audio_object::Error::BadObject)
     );
 }
 
@@ -169,7 +170,7 @@ fn test_get_device_source_name_with_invalid_scope() {
         if !is_output {
             assert_eq!(
                 get_device_source_name(id, &Scope::Output,).unwrap_err(),
-                Error::NotFound
+                Error::WrongScope
             );
         }
     }
@@ -180,7 +181,7 @@ fn test_get_device_source_name_with_invalid_scope() {
         if !is_input {
             assert_eq!(
                 get_device_source_name(id, &Scope::Input,).unwrap_err(),
-                Error::NotFound
+                Error::WrongScope
             );
         }
     }
@@ -197,7 +198,10 @@ fn test_get_device_source_name() {
                 assert!(!name.is_empty());
             }
             Err(e) => {
-                assert_eq!(e, Error::NotFound);
+                assert_eq!(
+                    e,
+                    Error::InvalidParameters(audio_object::Error::UnknownProperty)
+                );
             }
         }
     }
@@ -209,7 +213,10 @@ fn test_get_device_source_name() {
                 assert!(!name.is_empty());
             }
             Err(e) => {
-                assert_eq!(e, Error::NotFound);
+                assert_eq!(
+                    e,
+                    Error::InvalidParameters(audio_object::Error::UnknownProperty)
+                );
             }
         }
     }
@@ -218,15 +225,15 @@ fn test_get_device_source_name() {
 // set_default_device
 // ------------------------------------
 #[test]
-#[should_panic(expected = "Invalid")]
+// #[should_panic(expected = "Bad")]
 fn test_set_default_device_with_invalid_id() {
     assert_eq!(
         set_default_device(sys::kAudioObjectUnknown, &Scope::Input).unwrap_err(),
-        Error::InvalidParameters
+        Error::InvalidParameters(audio_object::Error::BadObject)
     );
     assert_eq!(
         set_default_device(sys::kAudioObjectUnknown, &Scope::Output).unwrap_err(),
-        Error::InvalidParameters
+        Error::InvalidParameters(audio_object::Error::BadObject)
     );
 }
 
@@ -253,7 +260,7 @@ fn test_set_default_device_with_same_device() {
         assert_ne!(id, sys::kAudioObjectUnknown);
         assert_eq!(
             set_default_device(id, &Scope::Input).unwrap_err(),
-            Error::InvalidParameters
+            Error::SetSameDevice
         );
     }
 
@@ -261,7 +268,7 @@ fn test_set_default_device_with_same_device() {
         assert_ne!(id, sys::kAudioObjectUnknown);
         assert_eq!(
             set_default_device(id, &Scope::Output).unwrap_err(),
-            Error::InvalidParameters
+            Error::SetSameDevice
         );
     }
 }
@@ -274,7 +281,7 @@ fn test_set_default_device_with_invalid_scope() {
         if !is_output {
             assert_eq!(
                 set_default_device(id, &Scope::Output).unwrap_err(),
-                Error::InvalidParameters
+                Error::WrongScope
             );
         }
     }
@@ -285,7 +292,7 @@ fn test_set_default_device_with_invalid_scope() {
         if !is_input {
             assert_eq!(
                 set_default_device(id, &Scope::Input).unwrap_err(),
-                Error::InvalidParameters
+                Error::WrongScope
             );
         }
     }
@@ -306,6 +313,7 @@ fn test_change_default_device(scope: &Scope) {
 }
 
 #[test]
+#[ignore]
 fn test_set_default_device() {
     test_change_default_device(&Scope::Input);
     test_change_default_device(&Scope::Output);
@@ -317,15 +325,15 @@ fn test_set_default_device() {
 // get_device_source
 // ------------------------------------
 #[test]
-#[should_panic(expected = "Invalid")]
+// #[should_panic(expected = "Bad")]
 fn test_get_device_source_with_invalid_id() {
     assert_eq!(
         get_device_source(sys::kAudioObjectUnknown, &Scope::Input,).unwrap_err(),
-        Error::InvalidParameters
+        Error::InvalidParameters(audio_object::Error::BadObject)
     );
     assert_eq!(
         get_device_source(sys::kAudioObjectUnknown, &Scope::Input,).unwrap_err(),
-        Error::InvalidParameters
+        Error::InvalidParameters(audio_object::Error::BadObject)
     );
 }
 
@@ -337,7 +345,7 @@ fn test_get_device_source_with_invalid_scope() {
         if !is_output {
             assert_eq!(
                 get_device_source(id, &Scope::Output).unwrap_err(),
-                Error::NotFound
+                Error::WrongScope
             );
         }
     }
@@ -348,7 +356,7 @@ fn test_get_device_source_with_invalid_scope() {
         if !is_input {
             assert_eq!(
                 get_device_source(id, &Scope::Input).unwrap_err(),
-                Error::NotFound
+                Error::WrongScope
             );
         }
     }
@@ -375,15 +383,15 @@ fn test_get_device_source() {
 // number_of_streams
 // ------------------------------------
 #[test]
-#[should_panic(expected = "Invalid")]
+// #[should_panic(expected = "Bad")]
 fn test_number_of_streams_with_invalid_id() {
     assert_eq!(
         number_of_streams(sys::kAudioObjectUnknown, &Scope::Input,).unwrap_err(),
-        Error::InvalidParameters
+        Error::InvalidParameters(audio_object::Error::BadObject)
     );
     assert_eq!(
         number_of_streams(sys::kAudioObjectUnknown, &Scope::Output).unwrap_err(),
-        Error::InvalidParameters
+        Error::InvalidParameters(audio_object::Error::BadObject)
     );
 }
 
@@ -398,6 +406,14 @@ fn test_number_of_streams() {
     }
 }
 
+// to_string
+// ------------------------------------
+// Skip now ...
+
+// get_btye_array
+// ------------------------------------
+// Skip now ...
+
 // btye_array_to_string
 // ------------------------------------
 #[test]
@@ -408,158 +424,4 @@ fn test_btye_array_to_string() {
     let result = btye_array_to_string(v_i8).unwrap();
     let expected = c_str.to_str().unwrap().to_string();
     assert_eq!(expected, result);
-}
-
-// get_property_data
-// ------------------------------------
-#[test]
-#[should_panic(expected = "Invalid")]
-fn test_get_property_data_with_invalid_id() {
-    assert_eq!(
-        get_property_data::<sys::AudioObjectID>(
-            sys::kAudioObjectUnknown,
-            &DEFAULT_INPUT_DEVICE_PROPERTY_ADDRESS,
-        ).unwrap_err(),
-        Error::InvalidParameters
-    );
-    assert_eq!(
-        get_property_data::<sys::AudioObjectID>(
-            sys::kAudioObjectUnknown,
-            &DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS,
-        ).unwrap_err(),
-        Error::InvalidParameters
-    );
-}
-
-#[test]
-fn test_get_property_data() {
-    assert!(
-        get_property_data::<sys::AudioObjectID>(
-            sys::kAudioObjectSystemObject,
-            &DEFAULT_INPUT_DEVICE_PROPERTY_ADDRESS,
-        ).is_ok()
-    );
-    assert!(
-        get_property_data::<sys::AudioObjectID>(
-            sys::kAudioObjectSystemObject,
-            &DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS,
-        ).is_ok()
-    );
-}
-
-// get_property_data_with_ptr
-// ------------------------------------
-#[test]
-#[should_panic(expected = "Invalid")]
-fn test_get_property_data_with_ptr_with_invalid_id() {
-    let mut id: sys::AudioObjectID = sys::kAudioObjectUnknown;
-    assert_eq!(
-        get_property_data_with_ptr(
-            sys::kAudioObjectUnknown,
-            &DEFAULT_INPUT_DEVICE_PROPERTY_ADDRESS,
-            &mut id,
-        ).unwrap_err(),
-        Error::InvalidParameters
-    );
-    assert_eq!(
-        get_property_data_with_ptr(
-            sys::kAudioObjectUnknown,
-            &DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS,
-            &mut id,
-        ).unwrap_err(),
-        Error::InvalidParameters
-    );
-}
-
-#[test]
-fn test_get_property_data_with_ptr() {
-    let mut id: sys::AudioObjectID = sys::kAudioObjectUnknown;
-    assert!(
-        get_property_data_with_ptr(
-            sys::kAudioObjectSystemObject,
-            &DEFAULT_INPUT_DEVICE_PROPERTY_ADDRESS,
-            &mut id,
-        ).is_ok()
-    );
-    assert!(
-        get_property_data_with_ptr(
-            sys::kAudioObjectSystemObject,
-            &DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS,
-            &mut id,
-        ).is_ok()
-    );
-}
-
-// get_property_data_size
-// ------------------------------------
-#[test]
-#[should_panic(expected = "Invalid")]
-fn test_get_property_data_size_with_invalid_id() {
-    assert_eq!(
-        get_property_data_size(
-            sys::kAudioObjectUnknown,
-            &DEFAULT_INPUT_DEVICE_PROPERTY_ADDRESS,
-        ).unwrap_err(),
-        Error::InvalidParameters
-    );
-    assert_eq!(
-        get_property_data_size(
-            sys::kAudioObjectUnknown,
-            &DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS,
-        ).unwrap_err(),
-        Error::InvalidParameters
-    );
-}
-
-#[test]
-fn test_get_property_data_size() {
-    assert!(
-        get_property_data_size(
-            sys::kAudioObjectSystemObject,
-            &DEFAULT_INPUT_DEVICE_PROPERTY_ADDRESS,
-        ).is_ok()
-    );
-    assert!(
-        get_property_data_size(
-            sys::kAudioObjectSystemObject,
-            &DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS,
-        ).is_ok()
-    );
-}
-
-// get_property_array
-// ------------------------------------
-#[test]
-#[should_panic(expected = "Invalid")]
-fn test_get_property_array_with_invalid_id() {
-    assert_eq!(
-        get_property_array::<sys::AudioObjectID>(
-            sys::kAudioObjectUnknown,
-            &DEVICE_PROPERTY_ADDRESS,
-        ).unwrap_err(),
-        Error::InvalidParameters
-    );
-    assert_eq!(
-        get_property_array::<sys::AudioObjectID>(
-            sys::kAudioObjectUnknown,
-            &DEVICE_PROPERTY_ADDRESS,
-        ).unwrap_err(),
-        Error::InvalidParameters
-    );
-}
-
-#[test]
-fn test_get_property_array() {
-    assert!(
-        get_property_array::<sys::AudioObjectID>(
-            sys::kAudioObjectSystemObject,
-            &DEVICE_PROPERTY_ADDRESS,
-        ).is_ok()
-    );
-    assert!(
-        get_property_array::<sys::AudioObjectID>(
-            sys::kAudioObjectSystemObject,
-            &DEVICE_PROPERTY_ADDRESS,
-        ).is_ok()
-    );
 }
