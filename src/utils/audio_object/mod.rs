@@ -1,7 +1,24 @@
+// Use `sys` as a prefix since we need to map the native error statuses like
+// `kAudioHardwareBadObjectError` or `kAudioHardwareUnknownPropertyError` into
+// our custom error type in `status_to_error()`. If we directly use
+// `kAudioHardwareBadObjectError` to compare with the given OSStatus variable,
+// the `kAudioHardwareBadObjectError` in the `match` arm will be a new variable
+// instead of the `kAudioHardwareBadObjectError` we expect. The following is an
+// example:
+//
+// match status { // status' type is `OSStatus`.
+//     kAudioHardwareBadObjectError => { ... }          // match to all status
+//     kAudioHardwareUnknownPropertyError => { ... }    // unreachable pattern
+//     ... => => { ... }                                // unreachable pattern
+// }
+//
+// The `kAudioHardwareBadObjectError` is a new variable introducec in match
+// block and it will match to all given `status`. It's not the
+// `kAudioHardwareBadObjectError` defined in a `OSStatus` enum in CoreAudio.
 extern crate coreaudio_sys as sys;
 
-use std::fmt;             // For fmt::Debug
-use std::mem;             // For mem::uninitialized(), mem::size_of()
+use std::fmt;             // For fmt::{Debug, Formatter, Result}
+use std::mem;             // For mem::{uninitialized(), size_of()}
 use std::os::raw::c_void; // For `void*`
 use std::ptr;             // For ptr::null()
 

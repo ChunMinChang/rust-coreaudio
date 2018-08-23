@@ -1,82 +1,102 @@
 extern crate core_foundation_sys;
-extern crate coreaudio_sys as sys;
+extern crate coreaudio_sys;
 
 mod audio_object;
 mod string_helper;
 
 use self::core_foundation_sys::string::CFStringRef;
+use self::coreaudio_sys::{
+    kAudioObjectPropertyName,
+    kAudioHardwarePropertyDevices,
+    kAudioHardwarePropertyDefaultInputDevice,
+    kAudioHardwarePropertyDefaultOutputDevice,
+    kAudioDevicePropertyStreams,
+    kAudioDevicePropertyDataSource,
+    kAudioDevicePropertyDataSourceNameForIDCFString,
+    kAudioObjectPropertyScopeInput,
+    kAudioObjectPropertyScopeOutput,
+    kAudioObjectPropertyScopeGlobal,
+    kAudioObjectPropertyElementMaster,
+    AudioObjectPropertyAddress,
+    AudioObjectID,
+    kAudioObjectSystemObject,   // AudioObjectID
+    kAudioObjectUnknown,        // AudioObjectID
+    AudioStreamID,              // AudioObjectID
+    AudioValueTranslation,
+};
 use std::fmt;             // For fmt::{Debug, Formatter, Result}
 use std::mem;             // For mem::{uninitialized(), size_of()}
 use std::os::raw::c_void; // For `void*`
 use std::ptr;             // For ptr::null()
 
-const DEVICE_NAME_PROPERTY_ADDRESS: sys::AudioObjectPropertyAddress =
-    sys::AudioObjectPropertyAddress {
-        mSelector: sys::kAudioObjectPropertyName,
-        mScope: sys::kAudioObjectPropertyScopeGlobal,
-        mElement: sys::kAudioObjectPropertyElementMaster,
+const DEVICE_NAME_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
+    AudioObjectPropertyAddress {
+        mSelector: kAudioObjectPropertyName,
+        mScope: kAudioObjectPropertyScopeGlobal,
+        mElement: kAudioObjectPropertyElementMaster,
     };
 
-const DEVICE_PROPERTY_ADDRESS: sys::AudioObjectPropertyAddress = sys::AudioObjectPropertyAddress {
-    mSelector: sys::kAudioHardwarePropertyDevices,
-    mScope: sys::kAudioObjectPropertyScopeGlobal,
-    mElement: sys::kAudioObjectPropertyElementMaster,
-};
-
-const DEFAULT_INPUT_DEVICE_PROPERTY_ADDRESS: sys::AudioObjectPropertyAddress =
-    sys::AudioObjectPropertyAddress {
-        mSelector: sys::kAudioHardwarePropertyDefaultInputDevice,
-        mScope: sys::kAudioObjectPropertyScopeGlobal,
-        mElement: sys::kAudioObjectPropertyElementMaster,
+const DEVICE_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
+    AudioObjectPropertyAddress {
+        mSelector: kAudioHardwarePropertyDevices,
+        mScope: kAudioObjectPropertyScopeGlobal,
+        mElement: kAudioObjectPropertyElementMaster,
     };
 
-const DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS: sys::AudioObjectPropertyAddress =
-    sys::AudioObjectPropertyAddress {
-        mSelector: sys::kAudioHardwarePropertyDefaultOutputDevice,
-        mScope: sys::kAudioObjectPropertyScopeGlobal,
-        mElement: sys::kAudioObjectPropertyElementMaster,
+const DEFAULT_INPUT_DEVICE_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
+    AudioObjectPropertyAddress {
+        mSelector: kAudioHardwarePropertyDefaultInputDevice,
+        mScope: kAudioObjectPropertyScopeGlobal,
+        mElement: kAudioObjectPropertyElementMaster,
     };
 
-const INPUT_DEVICE_STREAMS_PROPERTY_ADDRESS: sys::AudioObjectPropertyAddress =
-    sys::AudioObjectPropertyAddress {
-        mSelector: sys::kAudioDevicePropertyStreams,
-        mScope: sys::kAudioObjectPropertyScopeInput,
-        mElement: sys::kAudioObjectPropertyElementMaster,
+const DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
+    AudioObjectPropertyAddress {
+        mSelector: kAudioHardwarePropertyDefaultOutputDevice,
+        mScope: kAudioObjectPropertyScopeGlobal,
+        mElement: kAudioObjectPropertyElementMaster,
     };
 
-const OUTPUT_DEVICE_STREAMS_PROPERTY_ADDRESS: sys::AudioObjectPropertyAddress =
-    sys::AudioObjectPropertyAddress {
-        mSelector: sys::kAudioDevicePropertyStreams,
-        mScope: sys::kAudioObjectPropertyScopeOutput,
-        mElement: sys::kAudioObjectPropertyElementMaster,
+const INPUT_DEVICE_STREAMS_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
+    AudioObjectPropertyAddress {
+        mSelector: kAudioDevicePropertyStreams,
+        mScope: kAudioObjectPropertyScopeInput,
+        mElement: kAudioObjectPropertyElementMaster,
     };
 
-const INPUT_DEVICE_SOURCE_PROPERTY_ADDRESS: sys::AudioObjectPropertyAddress =
-    sys::AudioObjectPropertyAddress {
-        mSelector: sys::kAudioDevicePropertyDataSource,
-        mScope: sys::kAudioObjectPropertyScopeInput,
-        mElement: sys::kAudioObjectPropertyElementMaster,
+const OUTPUT_DEVICE_STREAMS_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
+    AudioObjectPropertyAddress {
+        mSelector: kAudioDevicePropertyStreams,
+        mScope: kAudioObjectPropertyScopeOutput,
+        mElement: kAudioObjectPropertyElementMaster,
     };
 
-const OUTPUT_DEVICE_SOURCE_PROPERTY_ADDRESS: sys::AudioObjectPropertyAddress =
-    sys::AudioObjectPropertyAddress {
-        mSelector: sys::kAudioDevicePropertyDataSource,
-        mScope: sys::kAudioObjectPropertyScopeOutput,
-        mElement: sys::kAudioObjectPropertyElementMaster,
+const INPUT_DEVICE_SOURCE_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
+    AudioObjectPropertyAddress {
+        mSelector: kAudioDevicePropertyDataSource,
+        mScope: kAudioObjectPropertyScopeInput,
+        mElement: kAudioObjectPropertyElementMaster,
     };
 
-const INPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS: sys::AudioObjectPropertyAddress =
-    sys::AudioObjectPropertyAddress {
-        mSelector: sys::kAudioDevicePropertyDataSourceNameForIDCFString,
-        mScope: sys::kAudioObjectPropertyScopeInput,
-        mElement: sys::kAudioObjectPropertyElementMaster,
+const OUTPUT_DEVICE_SOURCE_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
+    AudioObjectPropertyAddress {
+        mSelector: kAudioDevicePropertyDataSource,
+        mScope: kAudioObjectPropertyScopeOutput,
+        mElement: kAudioObjectPropertyElementMaster,
     };
 
-const OUTPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS: sys::AudioObjectPropertyAddress =
-    sys::AudioObjectPropertyAddress {
-        mSelector: sys::kAudioDevicePropertyDataSourceNameForIDCFString,
-        mScope: sys::kAudioObjectPropertyScopeOutput,
-        mElement: sys::kAudioObjectPropertyElementMaster,
+const INPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
+    AudioObjectPropertyAddress {
+        mSelector: kAudioDevicePropertyDataSourceNameForIDCFString,
+        mScope: kAudioObjectPropertyScopeInput,
+        mElement: kAudioObjectPropertyElementMaster,
+    };
+
+const OUTPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
+    AudioObjectPropertyAddress {
+        mSelector: kAudioDevicePropertyDataSourceNameForIDCFString,
+        mScope: kAudioObjectPropertyScopeOutput,
+        mElement: kAudioObjectPropertyElementMaster,
     };
 
 // TODO: Maybe we should move this enum out since other module may also
@@ -127,26 +147,24 @@ impl fmt::Debug for Error {
 
 // Public APIs
 // ========================================================================
-pub fn get_default_device_id(scope: &Scope) -> Result<sys::AudioObjectID, Error> {
-    let address: &sys::AudioObjectPropertyAddress = if scope == &Scope::Input {
+pub fn get_default_device_id(scope: &Scope) -> Result<AudioObjectID, Error> {
+    let address: &AudioObjectPropertyAddress = if scope == &Scope::Input {
         &DEFAULT_INPUT_DEVICE_PROPERTY_ADDRESS
     } else {
         &DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS
     };
-    let id: sys::AudioObjectID = audio_object::get_property_data::<sys::AudioObjectID>(
-        sys::kAudioObjectSystemObject,
-        address,
-    )?;
-    // `id` will be kAudioObjectUnknown when there is no valid device, so we
-    // check it before returning it.
-    if id == sys::kAudioObjectUnknown {
+    let id: AudioObjectID =
+        audio_object::get_property_data::<AudioObjectID>(kAudioObjectSystemObject, address)?;
+    // `id` will be kAudioObjectUnknown when there is no valid device.
+    // Return `NoDeviceFound` error in this case.
+    if id == kAudioObjectUnknown {
         Err(Error::NoDeviceFound)
     } else {
         Ok(id)
     }
 }
 
-pub fn in_scope(id: sys::AudioObjectID, scope: &Scope) -> Result<bool, Error> {
+pub fn in_scope(id: AudioObjectID, scope: &Scope) -> Result<bool, Error> {
     let streams = number_of_streams(id, scope)?;
     Ok(streams > 0)
 }
@@ -154,23 +172,23 @@ pub fn in_scope(id: sys::AudioObjectID, scope: &Scope) -> Result<bool, Error> {
 // Apple has no API to get input-only or output-only devices. To do that, we
 // need to get all the devices first ans then check if they are input or output
 // ony by one.
-pub fn get_device_ids(scope: &Scope) -> Result<Vec<sys::AudioObjectID>, Error> {
-    let mut devices: Vec<sys::AudioObjectID> = get_all_device_ids()?;
-    // It's ok to call `unwrap()` here since all the `sys::AudioObjectID` values
+pub fn get_device_ids(scope: &Scope) -> Result<Vec<AudioObjectID>, Error> {
+    let mut devices: Vec<AudioObjectID> = get_all_device_ids()?;
+    // It's ok to call `unwrap()` here since all the `AudioObjectID` values
     // in `devices` are valid.
     devices.retain(|&device| in_scope(device, scope).unwrap());
     Ok(devices)
 }
 
-pub fn get_all_device_ids() -> Result<Vec<sys::AudioObjectID>, Error> {
-    let ids: Vec<sys::AudioObjectID> = audio_object::get_property_array::<sys::AudioObjectID>(
-        sys::kAudioObjectSystemObject,
+pub fn get_all_device_ids() -> Result<Vec<AudioObjectID>, Error> {
+    let ids: Vec<AudioObjectID> = audio_object::get_property_array::<AudioObjectID>(
+        kAudioObjectSystemObject,
         &DEVICE_PROPERTY_ADDRESS,
     )?;
     Ok(ids)
 }
 
-pub fn get_device_label(id: sys::AudioObjectID, scope: &Scope) -> Result<String, Error> {
+pub fn get_device_label(id: AudioObjectID, scope: &Scope) -> Result<String, Error> {
     match get_device_source_name(id, scope) {
         Ok(name) => Ok(name),
         Err(Error::WrongScope) => Err(Error::WrongScope),
@@ -178,7 +196,7 @@ pub fn get_device_label(id: sys::AudioObjectID, scope: &Scope) -> Result<String,
     }
 }
 
-pub fn get_device_name(id: sys::AudioObjectID) -> Result<String, Error> {
+pub fn get_device_name(id: AudioObjectID) -> Result<String, Error> {
     let name: CFStringRef =
         audio_object::get_property_data::<CFStringRef>(id, &DEVICE_NAME_PROPERTY_ADDRESS)?;
     string_helper::to_string(name).map_err(|e| Error::ConversionFailed(e))
@@ -187,18 +205,18 @@ pub fn get_device_name(id: sys::AudioObjectID) -> Result<String, Error> {
     //       pointer.
 }
 
-pub fn get_device_source_name(id: sys::AudioObjectID, scope: &Scope) -> Result<String, Error> {
+pub fn get_device_source_name(id: AudioObjectID, scope: &Scope) -> Result<String, Error> {
     let mut source: u32 = get_device_source(id, scope)?;
     let mut name: CFStringRef = ptr::null();
 
-    let mut translation: sys::AudioValueTranslation = sys::AudioValueTranslation {
+    let mut translation: AudioValueTranslation = AudioValueTranslation {
         mInputData: &mut source as *mut u32 as *mut c_void,
         mInputDataSize: mem::size_of::<u32>() as u32,
         mOutputData: &mut name as *mut CFStringRef as *mut c_void,
         mOutputDataSize: mem::size_of::<CFStringRef>() as u32,
     };
 
-    let address: &sys::AudioObjectPropertyAddress = if scope == &Scope::Input {
+    let address: &AudioObjectPropertyAddress = if scope == &Scope::Input {
         &INPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS
     } else {
         &OUTPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS
@@ -210,7 +228,7 @@ pub fn get_device_source_name(id: sys::AudioObjectID, scope: &Scope) -> Result<S
     //       pointer.
 }
 
-pub fn set_default_device(id: sys::AudioObjectID, scope: &Scope) -> Result<(), Error> {
+pub fn set_default_device(id: AudioObjectID, scope: &Scope) -> Result<(), Error> {
     // Surprisingly it's ok to set
     //   1. a unknown device
     //   2. a non-input/non-output device
@@ -224,23 +242,23 @@ pub fn set_default_device(id: sys::AudioObjectID, scope: &Scope) -> Result<(), E
     if id == default_id {
         return Err(Error::SetSameDevice);
     }
-    let address: &sys::AudioObjectPropertyAddress = if scope == &Scope::Input {
+    let address: &AudioObjectPropertyAddress = if scope == &Scope::Input {
         &DEFAULT_INPUT_DEVICE_PROPERTY_ADDRESS
     } else {
         &DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS
     };
-    let success = audio_object::set_property_data(sys::kAudioObjectSystemObject, address, &id)?;
+    let success = audio_object::set_property_data(kAudioObjectSystemObject, address, &id)?;
     Ok(success)
 }
 
 // Private APIs
 // ========================================================================
-fn get_device_source(id: sys::AudioObjectID, scope: &Scope) -> Result<u32, Error> {
+fn get_device_source(id: AudioObjectID, scope: &Scope) -> Result<u32, Error> {
     if !in_scope(id, scope)? {
         return Err(Error::WrongScope);
     }
 
-    let address: &sys::AudioObjectPropertyAddress = if scope == &Scope::Input {
+    let address: &AudioObjectPropertyAddress = if scope == &Scope::Input {
         &INPUT_DEVICE_SOURCE_PROPERTY_ADDRESS
     } else {
         &OUTPUT_DEVICE_SOURCE_PROPERTY_ADDRESS
@@ -249,14 +267,14 @@ fn get_device_source(id: sys::AudioObjectID, scope: &Scope) -> Result<u32, Error
     Ok(source)
 }
 
-fn number_of_streams(id: sys::AudioObjectID, scope: &Scope) -> Result<usize, Error> {
-    let address: &sys::AudioObjectPropertyAddress = if scope == &Scope::Input {
+fn number_of_streams(id: AudioObjectID, scope: &Scope) -> Result<usize, Error> {
+    let address: &AudioObjectPropertyAddress = if scope == &Scope::Input {
         &INPUT_DEVICE_STREAMS_PROPERTY_ADDRESS
     } else {
         &OUTPUT_DEVICE_STREAMS_PROPERTY_ADDRESS
     };
     let size = audio_object::get_property_data_size(id, address)?;
-    Ok(size / mem::size_of::<sys::AudioStreamID>())
+    Ok(size / mem::size_of::<AudioStreamID>())
 }
 
 #[cfg(test)]
