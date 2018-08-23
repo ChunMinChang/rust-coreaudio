@@ -1,13 +1,14 @@
-extern crate core_foundation_sys as cf; // Force CoreFundation being built within project.
+extern crate core_foundation_sys;
 extern crate coreaudio_sys as sys;
 
 mod audio_object;
+mod string_helper;
 
-use std::ffi::CStr;                 // For CStr
-use std::fmt;                       // For fmt::Debug
-use std::mem;                       // For mem::uninitialized(), mem::size_of()
-use std::os::raw::{c_char, c_void}; // For `c_char`, `void*`
-use std::ptr;                       // For ptr::null()
+use self::core_foundation_sys::string::CFStringRef;
+use std::fmt;             // For fmt::{Debug, Formatter, Result}
+use std::mem;             // For mem::{uninitialized(), size_of()}
+use std::os::raw::c_void; // For `void*`
+use std::ptr;             // For ptr::null()
 
 const DEVICE_NAME_PROPERTY_ADDRESS: sys::AudioObjectPropertyAddress =
     sys::AudioObjectPropertyAddress {
@@ -90,7 +91,7 @@ pub enum Scope {
 // Using PartialEq for comparison.
 #[derive(PartialEq)]
 pub enum Error {
-    ConversionFailed,
+    ConversionFailed(string_helper::Error),
     InvalidParameters(audio_object::Error),
     NoDeviceFound,
     SetSameDevice,
@@ -104,10 +105,17 @@ impl From<audio_object::Error> for Error {
     }
 }
 
+// To convert an string_helper::Error to a Error.
+impl From<string_helper::Error> for Error {
+    fn from(e: string_helper::Error) -> Error {
+        Error::ConversionFailed(e)
+    }
+}
+
 impl fmt::Debug for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let printable = match self {
-            Error::ConversionFailed => "Fail to convert CFStringRef to String.".to_string(),
+            Error::ConversionFailed(e) => format!("Fail to convert string: {:?}", e),
             Error::InvalidParameters(e) => format!("Invalid parameters: {:?}", e),
             Error::NoDeviceFound => "No valid device found by given information.".to_string(),
             Error::SetSameDevice => "Try setting the device with the same one".to_string(),
@@ -171,9 +179,9 @@ pub fn get_device_label(id: sys::AudioObjectID, scope: &Scope) -> Result<String,
 }
 
 pub fn get_device_name(id: sys::AudioObjectID) -> Result<String, Error> {
-    let name: sys::CFStringRef =
-        audio_object::get_property_data::<sys::CFStringRef>(id, &DEVICE_NAME_PROPERTY_ADDRESS)?;
-    to_string(name)
+    let name: CFStringRef =
+        audio_object::get_property_data::<CFStringRef>(id, &DEVICE_NAME_PROPERTY_ADDRESS)?;
+    string_helper::to_string(name).map_err(|e| Error::ConversionFailed(e))
     // TODO: The memory pointed by `name` will be free in to_string(...).
     //       Find a way to move `name` to prevent it from being a dangling
     //       pointer.
@@ -181,13 +189,13 @@ pub fn get_device_name(id: sys::AudioObjectID) -> Result<String, Error> {
 
 pub fn get_device_source_name(id: sys::AudioObjectID, scope: &Scope) -> Result<String, Error> {
     let mut source: u32 = get_device_source(id, scope)?;
-    let mut name: sys::CFStringRef = ptr::null();
+    let mut name: CFStringRef = ptr::null();
 
     let mut translation: sys::AudioValueTranslation = sys::AudioValueTranslation {
         mInputData: &mut source as *mut u32 as *mut c_void,
         mInputDataSize: mem::size_of::<u32>() as u32,
-        mOutputData: &mut name as *mut sys::CFStringRef as *mut c_void,
-        mOutputDataSize: mem::size_of::<sys::CFStringRef>() as u32,
+        mOutputData: &mut name as *mut CFStringRef as *mut c_void,
+        mOutputDataSize: mem::size_of::<CFStringRef>() as u32,
     };
 
     let address: &sys::AudioObjectPropertyAddress = if scope == &Scope::Input {
@@ -196,7 +204,7 @@ pub fn get_device_source_name(id: sys::AudioObjectID, scope: &Scope) -> Result<S
         &OUTPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS
     };
     audio_object::get_property_data_with_ptr(id, address, &mut translation)?;
-    to_string(name)
+    string_helper::to_string(name).map_err(|e| Error::ConversionFailed(e))
     // TODO: The memory pointed by `name` will be free in to_string(...).
     //       Find a way to move `name` to prevent it from being a dangling
     //       pointer.
@@ -249,51 +257,6 @@ fn number_of_streams(id: sys::AudioObjectID, scope: &Scope) -> Result<usize, Err
     };
     let size = audio_object::get_property_data_size(id, address)?;
     Ok(size / mem::size_of::<sys::AudioStreamID>())
-}
-
-// TODO: Move string conversion to another module maybe.
-fn to_string(cf_string_ref: sys::CFStringRef) -> Result<String, Error> {
-    assert!(!cf_string_ref.is_null());
-    let buffer: Vec<c_char> = get_btye_array(cf_string_ref)?;
-    btye_array_to_string(buffer)
-}
-
-fn get_btye_array(cf_string_ref: sys::CFStringRef) -> Result<Vec<c_char>, Error> {
-    let length: sys::CFIndex = unsafe { sys::CFStringGetLength(cf_string_ref) };
-    if length <= 0 {
-        return Err(Error::ConversionFailed);
-    }
-    let size: sys::CFIndex =
-        unsafe { sys::CFStringGetMaximumSizeForEncoding(length, sys::kCFStringEncodingUTF8) } + 1;
-    let mut buffer = Vec::<c_char>::with_capacity(size as usize);
-    let success: bool = unsafe {
-        buffer.set_len(size as usize);
-        let result: sys::Boolean = sys::CFStringGetCString(
-            cf_string_ref,
-            buffer.as_mut_ptr(),
-            size,
-            sys::kCFStringEncodingUTF8,
-        );
-        sys::CFRelease(cf_string_ref as *mut c_void);
-        result != 0 // sys::Boolean is u8. Returing a bool by comparing with 0.
-    };
-    if success {
-        Ok(buffer)
-    } else {
-        Err(Error::ConversionFailed)
-    }
-}
-
-fn btye_array_to_string(mut buffer: Vec<c_char>) -> Result<String, Error> {
-    // CStr::from_ptr will call strlen to trim the array first. See:
-    // https://doc.rust-lang.org/src/std/ffi/c_str.rs.html#935-939
-    let c_str: &CStr = unsafe { CStr::from_ptr(buffer.as_mut_ptr()) };
-    let str_slice: &str = match c_str.to_str() {
-        Ok(slice) => slice,
-        Err(_ /* Utf8Error */) => return Err(Error::ConversionFailed),
-    };
-    let str_buf: String = str_slice.to_string();
-    Ok(str_buf)
 }
 
 #[cfg(test)]
