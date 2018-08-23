@@ -16,12 +16,18 @@ use super::*;
 
 // btye_array_to_string
 // ------------------------------------
+// In fact, it's unnecessary to test it because it directly uses the built-in API.
+#[test]
+fn test_btye_array_to_string_with_invalid_vec() {
+    // some invalid bytes, in a vector
+    let bytes = vec![0, 159];
+    assert!(btye_array_to_string(bytes).is_err())
+}
+
 #[test]
 fn test_btye_array_to_string() {
-    let c_str = CStr::from_bytes_with_nul(b"hello~!@#$%^&*()_-=+\0").unwrap();
-    let v_u8 = c_str.to_bytes().to_vec();
-    let v_i8 = v_u8.iter().map(|&e| e as i8).collect();
-    let result = btye_array_to_string(v_i8).unwrap();
-    let expected = c_str.to_str().unwrap().to_string();
+    let expected = String::from("hello~!@#$%^&*()_-=+\0");
+    let bytes = expected.clone().into_bytes();
+    let result = btye_array_to_string(bytes).unwrap();
     assert_eq!(expected, result);
 }
