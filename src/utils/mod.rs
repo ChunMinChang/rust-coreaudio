@@ -4,7 +4,7 @@ extern crate coreaudio_sys as sys;
 mod audio_object;
 
 use std::ffi::CStr;                 // For CStr
-use std::fmt;                       // For fmt::Display
+use std::fmt;                       // For fmt::Debug
 use std::mem;                       // For mem::uninitialized(), mem::size_of()
 use std::os::raw::{c_char, c_void}; // For `c_char`, `void*`
 use std::ptr;                       // For ptr::null()
@@ -87,9 +87,8 @@ pub enum Scope {
     Output,
 }
 
-// Using Debug for std::fmt::Debug.
 // Using PartialEq for comparison.
-#[derive(Debug, PartialEq)]
+#[derive(PartialEq)]
 pub enum Error {
     ConversionFailed,
     InvalidParameters(audio_object::Error),
@@ -98,22 +97,21 @@ pub enum Error {
     WrongScope,
 }
 
-// Converting audio_object::Error to Error.
+// To convert an audio_object::Error to a Error.
 impl From<audio_object::Error> for Error {
     fn from(e: audio_object::Error) -> Error {
         Error::InvalidParameters(e)
     }
 }
 
-// TODO: Show error messages inside InvalidParameters.
-impl fmt::Display for Error {
+impl fmt::Debug for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let printable = match *self {
-            Error::ConversionFailed => "Fail to convert CFStringRef to String.",
-            Error::InvalidParameters(_) => "Invalid parameters.",
-            Error::NoDeviceFound => "No valid device found by given information.",
-            Error::SetSameDevice => "The given device is same as the device system tries to set.",
-            Error::WrongScope => "The given scope is wrong.",
+        let printable = match self {
+            Error::ConversionFailed => "Fail to convert CFStringRef to String.".to_string(),
+            Error::InvalidParameters(e) => format!("Invalid parameters: {:?}", e),
+            Error::NoDeviceFound => "No valid device found by given information.".to_string(),
+            Error::SetSameDevice => "Try setting the device with the same one".to_string(),
+            Error::WrongScope => "The given scope is wrong.".to_string(),
         };
         write!(f, "{}", printable)
     }

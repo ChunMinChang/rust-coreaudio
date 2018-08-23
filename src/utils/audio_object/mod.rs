@@ -1,29 +1,24 @@
 extern crate coreaudio_sys as sys;
 
-use std::fmt;             // For fmt::Display
+use std::fmt;             // For fmt::Debug
 use std::mem;             // For mem::uninitialized(), mem::size_of()
 use std::os::raw::c_void; // For `void*`
 use std::ptr;             // For ptr::null()
 
-// Using Debug for std::fmt::Debug.
 // Using PartialEq for comparison.
-#[derive(Debug, PartialEq)]
+#[derive(PartialEq)]
 pub enum Error {
     BadObject,
     UnknownProperty,
     SizeIsZero,
 }
 
-impl fmt::Display for Error {
+impl fmt::Debug for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let printable = match *self {
-            Error::BadObject => {
-                "The AudioObjectID passed to the function doesn't map to a valid AudioObject."
-            }
-            Error::UnknownProperty => {
-                "The AudioObject doesn't know about the property at the given address."
-            }
-            Error::SizeIsZero => "The size of data mapping to the given id and address is zero.",
+        let printable = match self {
+            Error::BadObject => "BadObject: The AudioObjectID passed to the function doesn't map to a valid AudioObject.",
+            Error::UnknownProperty => "UnknownProperty: The AudioObject doesn't know about the property at the given address.",
+            Error::SizeIsZero => "SizeIsZero: The size of data mapping to the given id and address is zero.",
         };
         write!(f, "{}", printable)
     }
