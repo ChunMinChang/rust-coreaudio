@@ -58,14 +58,13 @@ fn get_btye_array(string_ref: CFStringRef) -> Result<Vec<u8>, Error> {
     };
     let mut size: CFIndex = 0;
     let mut converted_chars: CFIndex = unsafe {
-        let empty: *const u8 = ptr::null();
         CFStringGetBytes(
             string_ref,
             range,
             kCFStringEncodingUTF8,
             0,
             false as Boolean,
-            empty as *mut u8,
+            ptr::null_mut() as *mut u8,
             0,
             &mut size,
         )
@@ -83,7 +82,6 @@ fn get_btye_array(string_ref: CFStringRef) -> Result<Vec<u8>, Error> {
     // Then, allocate the buffer with the required size and actually copy data into it.
     let mut buffer = vec![b'\x00'; size as usize];
     converted_chars = unsafe {
-        let empty: *const CFIndex = ptr::null();
         CFStringGetBytes(
             string_ref,
             range,
@@ -92,7 +90,7 @@ fn get_btye_array(string_ref: CFStringRef) -> Result<Vec<u8>, Error> {
             false as Boolean,
             buffer.as_mut_ptr(),
             size,
-            empty as *mut CFIndex,
+            ptr::null_mut() as* mut CFIndex,
         )
     };
     unsafe { CFRelease(string_ref as *mut c_void) };
