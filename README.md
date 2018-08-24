@@ -8,5 +8,6 @@ This is a draft to play CoreAudio APIs in *Rust*. The aim for this project is to
 5. test the APIs we implemented in parallel threads, by running ```cargo tests```
 
 ## TO-DO
-- Find a better way to wrap ```CFStringRef``` with ```CFRelease```.
+- Find a better way to wrap ```CFStringRef``` with ```CFRelease```
+  - Use *tuple struct* to wrap ```CFStringRef```
 - Consider creating a *AudioObject* struct with  a ```AudioObjectID``` member and having *lock* for its setters/getters.
