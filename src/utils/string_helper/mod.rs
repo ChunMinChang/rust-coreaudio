@@ -54,7 +54,7 @@ fn get_btye_array(string_ref: CFStringRef) -> Result<Vec<u8>, Error> {
     }
     let range: CFRange = CFRange {
         location: 0,
-        length: length,
+        length,
     };
     let mut size: CFIndex = 0;
     let mut converted_chars: CFIndex = unsafe {

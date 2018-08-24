@@ -45,7 +45,7 @@ fn change_default_devices() {
 }
 
 fn change_default_device(scope: &utils::Scope) {
-    let devices = utils::get_device_ids(scope).unwrap_or(vec![]);
+    let devices = utils::get_device_ids(scope).unwrap_or_default();
     if devices.len() < 2 {
         return;
     }

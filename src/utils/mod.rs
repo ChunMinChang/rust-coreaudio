@@ -199,7 +199,7 @@ pub fn get_device_label(id: AudioObjectID, scope: &Scope) -> Result<String, Erro
 pub fn get_device_name(id: AudioObjectID) -> Result<String, Error> {
     let name: CFStringRef =
         audio_object::get_property_data::<CFStringRef>(id, &DEVICE_NAME_PROPERTY_ADDRESS)?;
-    string_helper::to_string(name).map_err(|e| Error::ConversionFailed(e))
+    string_helper::to_string(name).map_err(Error::ConversionFailed)
     // TODO: The memory pointed by `name` will be free in to_string(...).
     //       Find a way to move `name` to prevent it from being a dangling
     //       pointer.
@@ -222,7 +222,7 @@ pub fn get_device_source_name(id: AudioObjectID, scope: &Scope) -> Result<String
         &OUTPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS
     };
     audio_object::get_property_data_with_ptr(id, address, &mut translation)?;
-    string_helper::to_string(name).map_err(|e| Error::ConversionFailed(e))
+    string_helper::to_string(name).map_err(Error::ConversionFailed)
     // TODO: The memory pointed by `name` will be free in to_string(...).
     //       Find a way to move `name` to prevent it from being a dangling
     //       pointer.
@@ -247,8 +247,8 @@ pub fn set_default_device(id: AudioObjectID, scope: &Scope) -> Result<(), Error>
     } else {
         &DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS
     };
-    let success = audio_object::set_property_data(kAudioObjectSystemObject, address, &id)?;
-    Ok(success)
+    audio_object::set_property_data(kAudioObjectSystemObject, address, &id)?;
+    Ok(())
 }
 
 // Private APIs
