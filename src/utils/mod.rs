@@ -24,10 +24,10 @@ use self::coreaudio_sys::{
     AudioStreamID,              // AudioObjectID
     AudioValueTranslation,
 };
-use std::fmt;             // For fmt::{Debug, Formatter, Result}
-use std::mem;             // For mem::{uninitialized(), size_of()}
+use std::fmt; // For fmt::{Debug, Formatter, Result}
+use std::mem; // For mem::{uninitialized(), size_of()}
 use std::os::raw::c_void;
-use std::ptr;             // For ptr::null()
+use std::ptr; // For ptr::null()
 
 const DEVICE_NAME_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
     AudioObjectPropertyAddress {

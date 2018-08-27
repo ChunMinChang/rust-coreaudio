@@ -5,7 +5,7 @@ use self::core_foundation_sys::base::{Boolean, CFIndex, CFRange, CFRelease};
 use self::core_foundation_sys::string::{kCFStringEncodingUTF8, CFStringGetBytes, CFStringGetLength, CFStringRef};
 use std::fmt; // For fmt::{Debug, Formatter, Result}
 use std::os::raw::c_void;
-use std::ptr; // For ptr::null()
+use std::ptr; // For ptr::null_mut()
 use std::str::Utf8Error;
 
 // TODO: Put the reason of the failure inside the error state
