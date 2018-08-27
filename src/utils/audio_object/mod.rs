@@ -19,7 +19,7 @@ extern crate coreaudio_sys as sys;
 
 use std::fmt;             // For fmt::{Debug, Formatter, Result}
 use std::mem;             // For mem::{uninitialized(), size_of()}
-use std::os::raw::c_void; // For `void*`
+use std::os::raw::c_void;
 use std::ptr;             // For ptr::null()
 
 // Using PartialEq for comparison.
