@@ -146,7 +146,7 @@ fn audio_object_get_property_data<T>(
             address, // as `*const AudioObjectPropertyAddress` automatically.
             0,
             ptr::null(),
-            size as *mut u32,    // Cast raw usize pointer to raw u32 pointer.
+            size as *mut sys::UInt32, // Cast raw usize pointer to raw u32 pointer.
             data as *mut c_void, // Cast raw T pointer to void pointer.
         )
     }
@@ -163,7 +163,7 @@ fn audio_object_get_property_data_size(
             address, // as `*const AudioObjectPropertyAddress` automatically.
             0,
             ptr::null(),
-            size as *mut u32, // Cast raw usize pointer to raw u32 pointer.
+            size as *mut sys::UInt32, // Cast raw usize pointer to raw u32 pointer.
         )
     }
 }
@@ -180,7 +180,7 @@ fn audio_object_set_property_data<T>(
             address, // as `*const AudioObjectPropertyAddress` automatically.
             0,
             ptr::null(),
-            size as u32,           // Cast usize variable to raw u32 variable.
+            size as sys::UInt32, // Cast usize variable to raw u32 variable.
             data as *const c_void, // Cast raw T pointer to void pointer.
         )
     }
