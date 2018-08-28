@@ -22,6 +22,11 @@ impl fmt::Debug for Error {
     }
 }
 
+pub enum Element {
+    Output = 0,
+    Input  = 1,
+}
+
 pub struct AudioUnit(sys::AudioUnit);
 
 impl AudioUnit {
@@ -34,7 +39,7 @@ impl AudioUnit {
         &self,
         id: sys::AudioUnitPropertyID,
         scope: sys::AudioUnitScope,
-        element: sys::AudioUnitElement
+        element: Element,
     ) -> Result<(usize, bool), Error> {
         get_property_info(self.0, id, scope, element)
     }
@@ -43,7 +48,7 @@ impl AudioUnit {
         &self,
         id: sys::AudioUnitPropertyID,
         scope: sys::AudioUnitScope,
-        element: sys::AudioUnitElement,
+        element: Element,
     ) -> Result<T, Error> {
         get_property::<T>(self.0, id, scope, element)
     }
@@ -52,10 +57,18 @@ impl AudioUnit {
         &self,
         id: sys::AudioUnitPropertyID,
         scope: sys::AudioUnitScope,
-        element: sys::AudioUnitElement,
+        element: Element,
         data: &T,
     ) -> Result<(), Error> {
         set_property::<T>(self.0, id, scope, element, data)
+    }
+
+    pub fn initialize(&self) -> Result<(), Error> {
+        init_unit(self.0)
+    }
+
+    pub fn uninitialized(&self) -> Result<(), Error> {
+        uninit_unit(self.0)
     }
 }
 
@@ -72,15 +85,32 @@ fn create_unit() -> Result<sys::AudioUnit, Error> {
     Ok(instance as sys::AudioUnit)
 }
 
+fn init_unit(unit: sys::AudioUnit) -> Result<(), Error> {
+    let status = unsafe { sys::AudioUnitInitialize(unit) };
+    convert_to_result(status)
+}
+
+fn uninit_unit(unit: sys::AudioUnit) -> Result<(), Error> {
+    let status = unsafe { sys::AudioUnitUninitialize(unit) };
+    convert_to_result(status)
+}
+
 fn get_property_info(
     unit: sys::AudioUnit,
     id: sys::AudioUnitPropertyID,
     scope: sys::AudioUnitScope,
-    element: sys::AudioUnitElement,
+    element: Element,
 ) -> Result<(usize, bool), Error> {
     let mut size: usize = 0;
     let mut writable = false;
-    let status = audio_unit_get_property_info(unit, id, scope, element, &mut size, &mut writable);
+    let status = audio_unit_get_property_info(
+        unit,
+        id,
+        scope,
+        element as sys::AudioUnitElement,
+        &mut size,
+        &mut writable
+    );
     convert_to_result(status)?;
     Ok((size, writable))
 }
@@ -89,7 +119,7 @@ fn get_property<T>(
     unit: sys::AudioUnit,
     id: sys::AudioUnitPropertyID,
     scope: sys::AudioUnitScope,
-    element: sys::AudioUnitElement,
+    element: Element,
 ) -> Result<T, Error> {
     let mut data: T = unsafe { mem::uninitialized() };
     let mut size = mem::size_of::<T>();
@@ -97,7 +127,7 @@ fn get_property<T>(
         unit,
         id,
         scope,
-        element,
+        element as sys::AudioUnitElement,
         &mut data,
         &mut size
     );
@@ -109,11 +139,18 @@ fn set_property<T>(
     unit: sys::AudioUnit,
     id: sys::AudioUnitPropertyID,
     scope: sys::AudioUnitScope,
-    element: sys::AudioUnitElement,
+    element: Element,
     data: &T,
 ) -> Result<(), Error> {
     let size = mem::size_of::<T>();
-    let status = audio_unit_set_property::<T>(unit, id, scope, element, data, size);
+    let status = audio_unit_set_property::<T>(
+        unit,
+        id,
+        scope,
+        element as sys::AudioUnitElement,
+        data,
+        size
+    );
     convert_to_result(status)
 }
 
@@ -169,7 +206,7 @@ fn audio_unit_get_property_info(
             id,
             scope,
             element,
-            size as *mut u32,
+            size as *mut sys::UInt32,
             writable as *mut sys::Boolean,
         )
     }
@@ -190,7 +227,7 @@ fn audio_unit_get_property<T>(
             scope,
             element,
             data as *mut c_void,
-            size as *mut u32,
+            size as *mut sys::UInt32,
         )
     }
 }
@@ -204,7 +241,14 @@ fn audio_unit_set_property<T>(
     size: usize,
 ) -> sys::OSStatus {
     unsafe {
-        sys::AudioUnitSetProperty(unit, id, scope, element, data as *const c_void, size as u32)
+        sys::AudioUnitSetProperty(
+            unit,
+            id,
+            scope,
+            element,
+            data as *const c_void,
+            size as sys::UInt32
+        )
     }
 }
 
