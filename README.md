@@ -11,3 +11,4 @@ This is a draft to play CoreAudio APIs in *Rust*. The aim for this project is to
 - Use *tuple struct* to wrap all native types(e.g., ```CFStringRef```, ```AudioObjectID```).
 - Cannot play sounds via DisplayPort. Find out why.
 - Redesign callback mechanism: Save a *callback* member variable in ```Stream``` and call it to fill buffer.
+- **Add tests** for *audio_unit* and *stream* modules.
