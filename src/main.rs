@@ -1,5 +1,6 @@
 extern crate rust_coreaudio;
-use rust_coreaudio::utils; // Refer to `utils` module
+use rust_coreaudio::utils;
+use rust_coreaudio::stream;
 
 fn show_result() {
     for id in utils::get_all_device_ids().unwrap() {
@@ -58,7 +59,44 @@ fn change_default_device(scope: &utils::Scope) {
     assert!(utils::set_default_device(new_device, scope).is_ok());
 }
 
+fn play_sound() {
+    use stream::{Buffer, CallbackArgs, Format, Stream};
+    use std::f64::consts::PI;
+
+    struct Iter {
+        value: f64,
+    }
+    impl Iterator for Iter {
+        type Item = f64;
+        fn next(&mut self) -> Option<f64> {
+            self.value += 440.0 / 44_100.0;
+            Some(self.value)
+        }
+    }
+
+    // 440hz sine wave generator.
+    let mut samples = Iter { value: 0.0 }.map(|phase| (phase * PI * 2.0).sin() as f32 * 0.15);
+
+    type Args = CallbackArgs<Buffer<f32>>;
+    let stm = Stream::new(2, Format::F32LE, 44100.0, move |args| {
+        let Args { mut data, frames } = args;
+        for i in 0..frames {
+            let sample = samples.next().unwrap();
+            for channel in data.channels_mut() {
+                channel[i] = sample;
+            }
+        }
+    }).unwrap();
+
+    stm.start().unwrap();
+
+    std::thread::sleep(std::time::Duration::from_millis(3000));
+
+    stm.stop().unwrap();
+}
+
 fn main() {
-    show_result();
-    change_default_devices();
+    play_sound();
+    // show_result();
+    // change_default_devices();
 }

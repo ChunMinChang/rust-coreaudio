@@ -10,6 +10,8 @@ use std::ptr; // For ptr::null_mut()
 pub enum Error {
     InvalidComponentID,
     NoComponentFound,
+    PropertyNotWritable,
+    Uninitialized,
 }
 
 impl fmt::Debug for Error {
@@ -17,6 +19,8 @@ impl fmt::Debug for Error {
         let printable = match self {
             Error::InvalidComponentID => "Using the invalid audio component.",
             Error::NoComponentFound => "No audio component matching with provided settings.",
+            PropertyNotWritable => "Trying to write a non-writable property.",
+            Error::Uninitialized => "Trying to run an uninitialized AudioUnit."
         };
         write!(f, "{}", printable)
     }
@@ -67,8 +71,23 @@ impl AudioUnit {
         init_unit(self.0)
     }
 
-    pub fn uninitialized(&self) -> Result<(), Error> {
+    pub fn uninitialize(&self) -> Result<(), Error> {
         uninit_unit(self.0)
+    }
+
+    pub fn start(&self) -> Result<(), Error> {
+        start_unit(self.0)
+    }
+
+    pub fn stop(&self) -> Result<(), Error> {
+        stop_unit(self.0)
+    }
+}
+
+impl Drop for AudioUnit {
+    fn drop(&mut self) {
+        self.stop();
+        self.uninitialize();
     }
 }
 
@@ -92,6 +111,16 @@ fn init_unit(unit: sys::AudioUnit) -> Result<(), Error> {
 
 fn uninit_unit(unit: sys::AudioUnit) -> Result<(), Error> {
     let status = unsafe { sys::AudioUnitUninitialize(unit) };
+    convert_to_result(status)
+}
+
+fn start_unit(unit: sys::AudioUnit) -> Result<(), Error> {
+    let status = unsafe { sys::AudioOutputUnitStart(unit) };
+    convert_to_result(status)
+}
+
+fn stop_unit(unit: sys::AudioUnit) -> Result<(), Error> {
+    let status = unsafe { sys::AudioOutputUnitStop(unit) };
     convert_to_result(status)
 }
 
@@ -174,22 +203,19 @@ fn get_new_instance(component: sys::AudioComponent) -> Result<sys::AudioComponen
 }
 
 fn convert_to_result(status: sys::OSStatus) -> Result<(), Error> {
-    match to_bindgen_type(status) {
-        sys::noErr => Ok(()),
+    match status {
+        0 => Ok(()), /* sys::noErr */
         e => Err(status_to_error(e)),
     }
 }
 
-fn status_to_error(status: BindgenOsstatus) -> Error {
+fn status_to_error(status: sys::OSStatus) -> Error {
     match status {
         4294964296 => Error::InvalidComponentID, /* invalidComponentID: -3000 */
+        sys::kAudioUnitErr_PropertyNotWritable => Error::PropertyNotWritable,
+        sys::kAudioUnitErr_Uninitialized => Error::Uninitialized,
         error => panic!("Unknown error: {}", error),
     }
-}
-
-type BindgenOsstatus = u32;
-fn to_bindgen_type(status: sys::OSStatus) -> BindgenOsstatus {
-    status as BindgenOsstatus
 }
 
 fn audio_unit_get_property_info(
