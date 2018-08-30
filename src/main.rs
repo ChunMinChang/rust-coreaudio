@@ -59,33 +59,52 @@ fn change_default_device(scope: &utils::Scope) {
     assert!(utils::set_default_device(new_device, scope).is_ok());
 }
 
+struct Synthesizer {
+    channels: u32,
+    rate: f64,
+    volume: f32,
+    phase: Vec<f32>,
+}
+impl Synthesizer {
+    fn new(channels: u32, rate: f64, volume: f32) -> Self {
+        let phase = vec![0.0; channels as usize];
+        Synthesizer {
+            channels,
+            rate,
+            volume,
+            phase,
+        }
+    }
+
+    fn run(&mut self, buffer: &mut rust_coreaudio::stream::Buffer<f32>, frames: usize) {
+        for frame in 0..frames {
+            for channel in 0..self.channels {
+                let data = self.phase[channel as usize].sin() * self.volume;
+                buffer.write(frame, channel, data);
+                self.phase[channel as usize] += self.get_increment(channel) as f32;
+            }
+        }
+    }
+
+    fn get_increment(&self, channel: u32) -> f64 {
+        use std::f64::consts::PI;
+        let freq = 220.0 * ((channel + 1) as f64);
+        2.0 * PI * freq / self.rate
+    }
+}
+
 fn play_sound() {
     use stream::{Buffer, CallbackArgs, Format, Stream};
     use std::f64::consts::PI;
 
-    struct Iter {
-        value: f64,
-    }
-    impl Iterator for Iter {
-        type Item = f64;
-        fn next(&mut self) -> Option<f64> {
-            self.value += 440.0 / 44_100.0;
-            Some(self.value)
-        }
-    }
-
-    // 440hz sine wave generator.
-    let mut samples = Iter { value: 0.0 }.map(|phase| (phase * PI * 2.0).sin() as f32 * 0.15);
+    const CHANNELS: u32 = 2;
+    const RATE: f64 = 44_100.0;
+    let mut synthesizer = Synthesizer::new(CHANNELS, RATE, 0.5);
 
     type Args = CallbackArgs<Buffer<f32>>;
-    let stm = Stream::new(2, Format::F32LE, 44100.0, move |args| {
+    let stm = Stream::new(CHANNELS, Format::F32LE, RATE, move |args| {
         let Args { mut data, frames } = args;
-        for i in 0..frames {
-            let sample = samples.next().unwrap();
-            for channel in data.channels_mut() {
-                channel[i] = sample;
-            }
-        }
+        synthesizer.run(&mut data, frames);
     }).unwrap();
 
     stm.start().unwrap();

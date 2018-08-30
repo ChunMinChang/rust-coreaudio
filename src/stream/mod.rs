@@ -86,23 +86,6 @@ pub struct CallbackWrapper {
     callback: Box<Callback>,
 }
 
-pub struct ChannelsMut<'a, S: 'a> {
-    buffers: slice::IterMut<'a, sys::AudioBuffer>,
-    frames: usize,
-    sample_format: PhantomData<S>,
-}
-impl<'a, S> Iterator for ChannelsMut<'a, S> {
-    type Item = &'a mut [S];
-    #[allow(non_snake_case)]
-    fn next(&mut self) -> Option<Self::Item> {
-        self.buffers.next().map(|&mut sys::AudioBuffer { mNumberChannels, mData, .. }| {
-            let len = mNumberChannels as usize * self.frames;
-            let ptr = mData as *mut S;
-            unsafe { slice::from_raw_parts_mut(ptr, len) }
-        })
-    }
-}
-
 // A wrapper around the pointer to the `AudioBufferList::mBuffers` array.
 pub struct Buffer<T> {
     // The list of audio buffers.
@@ -113,12 +96,21 @@ pub struct Buffer<T> {
 }
 
 impl<T> Buffer<T> {
-    pub fn channels_mut(&mut self) -> ChannelsMut<T> {
-        ChannelsMut {
-            buffers: self.buffers.iter_mut(),
-            frames: self.frames,
-            sample_format: PhantomData,
+    pub fn write(&self, frame: usize, channel: u32, data: T) -> Result<(), ()> {
+        let channels = self.buffers[0].mNumberChannels;
+        if channel >= channels || frame >= self.frames {
+            return Err(());
         }
+        let ptr: *mut T = self.as_mut_ptr();
+        let offset = frame * channels as usize;
+        let index = offset + channel as usize;
+        unsafe {
+            *ptr.offset(index as isize) = data;
+        };
+        Ok(())
+    }
+    fn as_mut_ptr(&self) -> *mut T {
+        self.buffers[0].mData as *mut T
     }
 }
 
