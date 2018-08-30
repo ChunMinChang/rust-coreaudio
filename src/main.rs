@@ -114,17 +114,15 @@ fn play_sound() {
     const RATE: f64 = 44_100.0;
     let mut synthesizer = Synthesizer::new(CHANNELS, RATE, 0.5);
 
+    // let format = Format::F32LE;
     // type Args = CallbackArgs<Buffer<f32>>;
-    // let stm = Stream::new(CHANNELS, Format::F32LE, RATE, move |args| {
-    //     let Args { mut data, frames } = args;
-    //     synthesizer.run(&mut data, frames);
-    // }).unwrap();
-
+    let format = Format::S16LE;
     type Args = CallbackArgs<Buffer<i16>>;
-    let stm = Stream::new(CHANNELS, Format::S16LE, RATE, move |args| {
+    let callback = move |args| {
         let Args { mut data, frames } = args;
         synthesizer.run(&mut data, frames);
-    }).unwrap();
+    };
+    let stm = Stream::new(CHANNELS, format, RATE, callback).unwrap();
 
     stm.start().unwrap();
 
