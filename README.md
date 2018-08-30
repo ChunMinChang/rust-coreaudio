@@ -10,4 +10,5 @@ This is a draft to play CoreAudio APIs in *Rust*. The aim for this project is to
 ## TO-DO
 - Use *tuple struct* to wrap all native types(e.g., ```CFStringRef```, ```AudioObjectID```).
 - Redesign callback mechanism: Save a *callback* member variable in ```Stream``` and call it to fill buffer.
+- Use *examples* to separate the test code for *stream* module and *utils* module.
 - **Add tests** for *audio_unit* and *stream* modules.
