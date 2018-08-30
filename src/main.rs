@@ -59,14 +59,26 @@ fn change_default_device(scope: &utils::Scope) {
     assert!(utils::set_default_device(new_device, scope).is_ok());
 }
 
+struct SynthesizedData(f64);
+impl From<SynthesizedData> for f32 {
+    fn from(d: SynthesizedData) -> f32 {
+        d.0 as f32
+    }
+}
+impl From<SynthesizedData> for i16 {
+    fn from(d: SynthesizedData) -> i16 {
+        (d.0 * 32767.0) as i16
+    }
+}
+
 struct Synthesizer {
     channels: u32,
     rate: f64,
-    volume: f32,
-    phase: Vec<f32>,
+    volume: f64,
+    phase: Vec<f64>,
 }
 impl Synthesizer {
-    fn new(channels: u32, rate: f64, volume: f32) -> Self {
+    fn new(channels: u32, rate: f64, volume: f64) -> Self {
         let phase = vec![0.0; channels as usize];
         Synthesizer {
             channels,
@@ -76,12 +88,13 @@ impl Synthesizer {
         }
     }
 
-    fn run(&mut self, buffer: &mut rust_coreaudio::stream::Buffer<f32>, frames: usize) {
+    fn run<T> (&mut self, buffer: &mut rust_coreaudio::stream::Buffer<T>, frames: usize)
+    where T: std::convert::From<SynthesizedData> {
         for frame in 0..frames {
             for channel in 0..self.channels {
-                let data = self.phase[channel as usize].sin() * self.volume;
-                buffer.write(frame, channel, data);
-                self.phase[channel as usize] += self.get_increment(channel) as f32;
+                let data = SynthesizedData(self.phase[channel as usize].sin() * self.volume);
+                buffer.write(frame, channel, data.into());
+                self.phase[channel as usize] += self.get_increment(channel);
             }
         }
     }
@@ -101,15 +114,21 @@ fn play_sound() {
     const RATE: f64 = 44_100.0;
     let mut synthesizer = Synthesizer::new(CHANNELS, RATE, 0.5);
 
-    type Args = CallbackArgs<Buffer<f32>>;
-    let stm = Stream::new(CHANNELS, Format::F32LE, RATE, move |args| {
+    // type Args = CallbackArgs<Buffer<f32>>;
+    // let stm = Stream::new(CHANNELS, Format::F32LE, RATE, move |args| {
+    //     let Args { mut data, frames } = args;
+    //     synthesizer.run(&mut data, frames);
+    // }).unwrap();
+
+    type Args = CallbackArgs<Buffer<i16>>;
+    let stm = Stream::new(CHANNELS, Format::S16LE, RATE, move |args| {
         let Args { mut data, frames } = args;
         synthesizer.run(&mut data, frames);
     }).unwrap();
 
     stm.start().unwrap();
 
-    std::thread::sleep(std::time::Duration::from_millis(3000));
+    std::thread::sleep(std::time::Duration::from_millis(1000));
 
     stm.stop().unwrap();
 }
