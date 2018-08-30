@@ -22,25 +22,21 @@ impl From<audio_unit::Error> for Error {
 
 pub enum Format {
     S16LE, // PCM signed 16-bit little-endian.
-    // S16BE, // PCM signed 16-bit big-endian.
     F32LE, // PCM 32-bit floating-point little-endian.
-    // F32BE, // PCM 32-bit floating-point big-endian.
 }
 
 impl Format {
     pub fn to_bits_per_channels(&self) -> u32 {
         match self {
-            Format::S16LE /*| Format::S16BE*/ => 16,
-            Format::F32LE /*| Format::F32BE*/ => 32,
+            Format::S16LE => 16,
+            Format::F32LE => 32,
         }
     }
 
     pub fn to_format_flags(&self) -> sys::AudioFormatFlags {
         let flags = match self {
             Format::S16LE => sys::kAudioFormatFlagIsSignedInteger,
-            // Format::S16BE => sys::kAudioFormatFlagIsSignedInteger | sys::kAudioFormatFlagIsBigEndian,
             Format::F32LE => sys::kAudioFormatFlagIsFloat,
-            // Format::F32BE => sys::kAudioFormatFlagIsFloat | sys::kAudioFormatFlagIsBigEndian,
         };
         flags | sys::kLinearPCMFormatFlagIsPacked
     }
