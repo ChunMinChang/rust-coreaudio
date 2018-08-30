@@ -180,18 +180,18 @@ impl Stream {
         F: FnMut(CallbackArgs<D>) + 'static,
         D: Data,
     {
-        let callback = move |io_action_flags: *mut sys::AudioUnitRenderActionFlags,
-                                  in_time_stamp: *const sys::AudioTimeStamp,
-                                  in_bus_number: sys::UInt32,
-                                  in_number_frames: sys::UInt32,
-                                  io_data: *mut sys::AudioBufferList| -> sys::OSStatus
-        {
+        let callback = move |
+            io_action_flags: *mut sys::AudioUnitRenderActionFlags,
+            in_time_stamp: *const sys::AudioTimeStamp,
+            in_bus_number: sys::UInt32,
+            in_number_frames: sys::UInt32,
+            io_data: *mut sys::AudioBufferList|
+        -> sys::OSStatus {
             let data = D::from_input_proc_args(in_number_frames, io_data);
             let args = CallbackArgs {
                 data: data,
                 frames: in_number_frames as usize,
             };
-
             f(args);
             sys::noErr as sys::OSStatus
         };
@@ -208,7 +208,7 @@ impl Stream {
 
         self.unit.set_property(
             sys::kAudioUnitProperty_SetRenderCallback,
-            sys::kAudioUnitScope_Input,
+            sys::kAudioUnitScope_Global,
             Element::Output,
             &callback_struct,
         )?;
@@ -216,11 +216,12 @@ impl Stream {
     }
 
     fn set_stream_format(&self, params: &Parameters) -> Result<(), Error> {
+        let description = params.to_description();
         self.unit.set_property(
             sys::kAudioUnitProperty_StreamFormat,
-            sys::kAudioUnitScope_Global,
+            sys::kAudioUnitScope_Input,
             Element::Output,
-            &params.to_description(),
+            &description,
         )?;
         Ok(())
     }
