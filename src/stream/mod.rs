@@ -150,17 +150,36 @@ pub struct CallbackArgs<D> {
     pub frames: usize, // The number of frames in the buffer.
 }
 
-struct StreamUnit {
+pub struct Stream {
     unit: AudioUnit,
 }
 
-impl StreamUnit {
-    fn new() -> Result<StreamUnit, Error> {
+impl Stream {
+    pub fn new<F, D>(channels: u32, format: Format, rate: f64, callback: F) -> Result<Self, Error>
+    where
+        F: FnMut(CallbackArgs<D>) + 'static,
+        D: Data,
+    {
+        let params = Parameters::new(channels, format, rate);
         let unit = AudioUnit::new()?;
-        Ok(StreamUnit { unit })
+        let mut stm = Stream { unit };
+        stm.set_stream_format(&params)?;
+        stm.set_callback(callback)?;
+        stm.init()?;
+        Ok(stm)
     }
 
-    pub fn set_callback<F, D>(&mut self, mut f: F) -> Result<(), Error>
+    pub fn start(&self) -> Result<(), Error> {
+        self.unit.start()?;
+        Ok(())
+    }
+
+    pub fn stop(&self) -> Result<(), Error> {
+        self.unit.stop()?;
+        Ok(())
+    }
+
+    fn set_callback<F, D>(&mut self, mut f: F) -> Result<(), Error>
     where
         F: FnMut(CallbackArgs<D>) + 'static,
         D: Data,
@@ -210,16 +229,6 @@ impl StreamUnit {
         Ok(())
     }
 
-    fn start(&self) -> Result<(), Error> {
-        self.unit.start()?;
-        Ok(())
-    }
-
-    fn stop(&self) -> Result<(), Error> {
-        self.unit.stop()?;
-        Ok(())
-    }
-
     fn init(&self) -> Result<(), Error> {
         self.unit.initialize()?;
         Ok(())
@@ -231,37 +240,10 @@ impl StreamUnit {
     }
 }
 
-pub struct Stream {
-    unit: StreamUnit,
-}
-
-impl Stream {
-    pub fn new<F, D>(channels: u32, format: Format, rate: f64, callback: F) -> Result<Stream, Error>
-    where
-        F: FnMut(CallbackArgs<D>) + 'static,
-        D: Data,
-    {
-        let params = Parameters::new(channels, format, rate);
-        let mut unit = StreamUnit::new()?;
-        unit.set_stream_format(&params)?;
-        unit.set_callback(callback)?;
-        unit.init();
-        Ok(Stream { unit })
-    }
-
-    pub fn start(&self) -> Result<(), Error> {
-        self.unit.start()
-    }
-
-    pub fn stop(&self) -> Result<(), Error> {
-        self.unit.stop()
-    }
-}
-
 impl Drop for Stream {
     fn drop(&mut self) {
         self.stop();
-        self.unit.uninit();
+        self.uninit();
     }
 }
 
