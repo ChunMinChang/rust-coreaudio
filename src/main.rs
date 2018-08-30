@@ -108,7 +108,6 @@ impl Synthesizer {
 
 fn play_sound() {
     use stream::{Buffer, CallbackArgs, Format, Stream};
-    use std::f64::consts::PI;
 
     const CHANNELS: u32 = 2;
     const RATE: f64 = 44_100.0;
