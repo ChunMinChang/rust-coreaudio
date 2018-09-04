@@ -21,6 +21,7 @@ impl From<audio_unit::Error> for Error {
     }
 }
 
+// TODO: Use native type to infer format directly.
 pub enum Format {
     S16LE, // PCM signed 16-bit little-endian.
     F32LE, // PCM 32-bit floating-point little-endian.
