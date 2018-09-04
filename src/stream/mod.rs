@@ -1,6 +1,7 @@
 extern crate coreaudio_sys as sys;
 
 use std::marker::PhantomData;
+use std::mem::size_of;
 use std::os::raw::c_void;
 use std::slice;
 
@@ -26,10 +27,10 @@ pub enum Format {
 }
 
 impl Format {
-    pub fn to_bits_per_channels(&self) -> u32 {
+    pub fn byte_size(&self) -> usize {
         match self {
-            Format::S16LE => 16,
-            Format::F32LE => 32,
+            Format::S16LE => size_of::<i16>(),
+            Format::F32LE => size_of::<f32>(),
         }
     }
 
@@ -56,9 +57,10 @@ impl Parameters {
         }
     }
     fn to_description(&self) -> sys::AudioStreamBasicDescription {
-        let bits_per_channel = self.format.to_bits_per_channels();
+        let byte_size = self.format.byte_size() as u32;
+        let bits_per_channel = byte_size * 8;
         let frames_per_packet = 1;
-        let bytes_per_frame = (bits_per_channel / 8) * self.channels;
+        let bytes_per_frame = byte_size * self.channels;
         let bytes_per_packet = bytes_per_frame * frames_per_packet;
         sys::AudioStreamBasicDescription {
             mSampleRate: self.rate,
