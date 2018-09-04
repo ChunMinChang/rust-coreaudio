@@ -202,7 +202,7 @@ impl Stream {
 
         self.unit.set_property(
             sys::kAudioUnitProperty_SetRenderCallback,
-            sys::kAudioUnitScope_Global,
+            sys::kAudioUnitScope_Input,
             Element::Output,
             &callback_struct,
         )?;
