@@ -86,6 +86,8 @@ pub struct AudioData<T> {
     data_type: PhantomData<T>
 }
 
+type Callback<T> = fn(&mut [T], usize);
+
 // The Stream struct will be converted to a pointer and the pointer will be
 // set as a `custom data` pointer to the underlying `AudioUnit` callback
 // function. (see `inputProcRefCon` in `set_callback`). Since underlying
@@ -93,13 +95,13 @@ pub struct AudioData<T> {
 // layout of `Stream` from being mangled by Rust compiler.
 #[repr(C)]
 pub struct Stream<T> {
-    callback: fn(&mut [T], usize),
+    callback: Callback<T>,
     parameters: Parameters,
     unit: AudioUnit,
 }
 
 impl<T> Stream<T> {
-    pub fn new(channels: u32, format: Format, rate: f64, callback: fn(&mut [T], usize)) -> Result<Self, Error> {
+    pub fn new(channels: u32, format: Format, rate: f64, callback: Callback<T>) -> Result<Self, Error> {
         let parameters = Parameters::new(channels, format, rate);
         let unit = AudioUnit::new()?;
         let stm = Stream { callback, parameters, unit };
