@@ -15,7 +15,7 @@ This is a draft to play CoreAudio APIs in *Rust*. The aim for this project is to
     - [CoreAudio][gist-audioobject]
 - Redesign callback mechanism: Save a *callback* member variable in ```Stream``` and call it to fill buffer.
   - [reference][gist-callback]
-- Use *examples* to separate the test code for *stream* module and *utils* module.
+- Use *examples* to separate the example code for *stream* module and *utils* module.
 - **Add tests** for *audio_unit* and *stream* modules.
 
 [gist-string-wrapper]: https://gist.github.com/ChunMinChang/25f3608c285f1abf2a5c289d5f758427 "Using tuple struct to wrap native C types"

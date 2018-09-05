@@ -77,87 +77,49 @@ impl Parameters {
     }
 }
 
-pub type Callback = FnMut(
-    *mut sys::AudioUnitRenderActionFlags,
-    *const sys::AudioTimeStamp,
-    sys::UInt32,
-    sys::UInt32,
-    *mut sys::AudioBufferList
-) -> sys::OSStatus;
-
-pub struct CallbackWrapper {
-    callback: Box<Callback>,
-}
-
 // A wrapper around the pointer to the `AudioBufferList::mBuffers` array.
-pub struct Buffer<T> {
-    // The list of audio buffers.
-    buffers: &'static mut [sys::AudioBuffer],
-    // The number of frames in each channel.
-    frames: usize,
-    data_format: PhantomData<T>,
+// Using `PhantomData` to carry the target type when passing this struct
+// from functions to functions.
+pub struct AudioData<T> {
+    buffers: &'static mut [sys::AudioBuffer], // The list of audio buffers.
+    frames: usize, // The number of frames in each channel.
+    data_type: PhantomData<T>
 }
 
-impl<T> Buffer<T> {
-    pub fn write(&self, frame: usize, channel: u32, data: T) -> Result<(), ()> {
-        let channels = self.buffers[0].mNumberChannels;
-        if channel >= channels || frame >= self.frames {
-            return Err(());
-        }
-        let ptr: *mut T = self.as_mut_ptr();
-        let offset = frame * channels as usize;
-        let index = offset + channel as usize;
-        unsafe {
-            *ptr.offset(index as isize) = data;
-        };
-        Ok(())
-    }
-    fn as_mut_ptr(&self) -> *mut T {
-        self.buffers[0].mData as *mut T
-    }
-}
-
-pub trait Data {
-    fn from_input_proc_args(num_frames: u32, io_data: *mut sys::AudioBufferList) -> Self;
-}
-
-impl<T> Data for Buffer<T> {
-    fn from_input_proc_args(frames: u32, io_data: *mut sys::AudioBufferList) -> Self {
-        let buffers = unsafe {
-            let ptr = (*io_data).mBuffers.as_ptr() as *mut sys::AudioBuffer;
-            let len = (*io_data).mNumberBuffers as usize;
-            slice::from_raw_parts_mut(ptr, len)
-        };
-        Buffer {
-            buffers: buffers,
-            frames: frames as usize,
-            data_format: PhantomData,
-        }
-    }
-}
-
-pub struct CallbackArgs<D> {
-    pub data: D, // The expected type for data in the buffer.
-    pub frames: usize, // The number of frames in the buffer.
-}
-
-pub struct Stream {
+// The Stream struct will be converted to a pointer and the pointer will be
+// set as a `custom data` pointer to the underlying `AudioUnit` callback
+// function. (see `inputProcRefCon` in `set_callback`). Since underlying
+// function is implemented in C, using `#[repr(C)]` to prevent the struct
+// layout of `Stream` from being mangled by Rust compiler.
+#[repr(C)]
+pub struct Stream<T> {
+    callback: fn(&mut [T], usize),
+    parameters: Parameters,
     unit: AudioUnit,
 }
 
-impl Stream {
-    pub fn new<F, D>(channels: u32, format: Format, rate: f64, callback: F) -> Result<Self, Error>
-    where
-        F: FnMut(CallbackArgs<D>) + 'static,
-        D: Data,
-    {
-        let params = Parameters::new(channels, format, rate);
+impl<T> Stream<T> {
+    pub fn new(channels: u32, format: Format, rate: f64, callback: fn(&mut [T], usize)) -> Result<Self, Error> {
+        let parameters = Parameters::new(channels, format, rate);
         let unit = AudioUnit::new()?;
-        let mut stm = Stream { unit };
-        stm.set_stream_format(&params)?;
-        stm.set_callback(callback)?;
-        stm.init()?;
+        let stm = Stream { callback, parameters, unit };
+        // Don't initialize the stream here!
+        // The memory address of `stm` is different from `x`
+        // where `x = Stream::new(...)` outside.
+        // If we call `stm.set_callback()` here, the `self` of
+        // `set_callback` here is `stm` and `stm` will be freed
+        // after `stm` is returned from `new`. Hence the `inputProcRefCon`
+        // in `set_callback` will be assigned to a dangling pointer and lead
+        // a segment fault or bus error when trying to use `in_ref_con` from
+        // `audio_unit_render_callback`.
         Ok(stm)
+    }
+
+    pub fn init(&mut self) -> Result<(), Error> {
+        self.set_stream_format()?;
+        self.set_callback()?;
+        self.init_unit()?;
+        Ok(())
     }
 
     pub fn start(&self) -> Result<(), Error> {
@@ -170,35 +132,31 @@ impl Stream {
         Ok(())
     }
 
-    fn set_callback<F, D>(&mut self, mut f: F) -> Result<(), Error>
-    where
-        F: FnMut(CallbackArgs<D>) + 'static,
-        D: Data,
-    {
-        let callback = move |
-            io_action_flags: *mut sys::AudioUnitRenderActionFlags,
-            in_time_stamp: *const sys::AudioTimeStamp,
-            in_bus_number: sys::UInt32,
-            in_number_frames: sys::UInt32,
-            io_data: *mut sys::AudioBufferList|
-        -> sys::OSStatus {
-            let data = D::from_input_proc_args(in_number_frames, io_data);
-            let args = CallbackArgs {
-                data: data,
-                frames: in_number_frames as usize,
-            };
-            f(args);
-            sys::noErr as sys::OSStatus
-        };
+    fn init_unit(&self) -> Result<(), Error> {
+        self.unit.initialize()?;
+        Ok(())
+    }
 
-        let callback_wrapper = Box::new(CallbackWrapper {
-            callback: Box::new(callback),
-        });
-        let callback_wrapper_ptr = Box::into_raw(callback_wrapper) as *mut c_void;
+    fn uninit_unit(&self) -> Result<(), Error> {
+        self.unit.uninitialize()?;
+        Ok(())
+    }
 
+    fn set_stream_format(&self) -> Result<(), Error> {
+        let description = self.parameters.to_description();
+        self.unit.set_property(
+            sys::kAudioUnitProperty_StreamFormat,
+            sys::kAudioUnitScope_Input,
+            Element::Output,
+            &description,
+        )?;
+        Ok(())
+    }
+
+    fn set_callback(&mut self) -> Result<(), Error> {
         let callback_struct = sys::AURenderCallbackStruct {
-            inputProc: Some(input_proc),
-            inputProcRefCon: callback_wrapper_ptr,
+            inputProc: Some(audio_unit_render_callback::<Self>),
+            inputProcRefCon: self as *mut Self as *mut c_void,
         };
 
         self.unit.set_property(
@@ -210,49 +168,85 @@ impl Stream {
         Ok(())
     }
 
-    fn set_stream_format(&self, params: &Parameters) -> Result<(), Error> {
-        let description = params.to_description();
-        self.unit.set_property(
-            sys::kAudioUnitProperty_StreamFormat,
-            sys::kAudioUnitScope_Input,
-            Element::Output,
-            &description,
-        )?;
-        Ok(())
-    }
-
-    fn init(&self) -> Result<(), Error> {
-        self.unit.initialize()?;
-        Ok(())
-    }
-
-    fn uninit(&self) -> Result<(), Error> {
-        self.unit.uninitialize()?;
-        Ok(())
+    fn get_buffer_data (&self, data: AudioData<T>) -> sys::OSStatus {
+        let ptr = data.buffers[0].mData as *mut T;
+        let channels = data.buffers[0].mNumberChannels as usize; // interleaved channels.
+        let frames = data.frames;
+        let len = channels * frames;
+        let buffer = unsafe { slice::from_raw_parts_mut(ptr, len) };
+        (self.callback)(buffer, frames);
+        sys::noErr as sys::OSStatus
     }
 }
 
-impl Drop for Stream {
+impl<T> Drop for Stream<T> {
     fn drop(&mut self) {
         self.stop();
-        self.uninit();
+        self.uninit_unit();
     }
 }
 
-extern "C" fn input_proc(
+// This trait will be used when
+// https://developer.apple.com/documentation/audiotoolbox/aurendercallback?language=objc
+trait RenderCallback {
+    fn render(
+        &self,
+        io_action_flags: *mut sys::AudioUnitRenderActionFlags,
+        in_time_stamp: *const sys::AudioTimeStamp,
+        in_bus_number: sys::UInt32,
+        in_number_of_frames: sys::UInt32,
+        io_data: *mut sys::AudioBufferList
+    ) -> sys::OSStatus;
+}
+
+impl<T> RenderCallback for Stream<T> {
+    fn render(
+        &self,
+        io_action_flags: *mut sys::AudioUnitRenderActionFlags,
+        in_time_stamp: *const sys::AudioTimeStamp,
+        in_bus_number: sys::UInt32,
+        in_number_of_frames: sys::UInt32,
+        io_data: *mut sys::AudioBufferList
+    ) -> sys::OSStatus {
+        let buffers = unsafe {
+            let ptr = (*io_data).mBuffers.as_ptr() as *mut sys::AudioBuffer;
+            let len = (*io_data).mNumberBuffers as usize; // non-interleaved channels.
+            slice::from_raw_parts_mut(ptr, len)
+        };
+        let data = AudioData {
+            buffers: buffers,
+            frames: in_number_of_frames as usize,
+            data_type: PhantomData,
+        };
+        self.get_buffer_data(data)
+    }
+}
+
+// The static callback function that will be registered by
+// `AURenderCallbackStruct` and called by underlying `AudioUnit` framework
+// directly.
+// see:
+// https://developer.apple.com/documentation/audiotoolbox/aurendercallbackstruct?language=objc
+// https://developer.apple.com/documentation/audiotoolbox/aurendercallback?language=objc
+//
+// The type `R: RenderCallback` is used to checked the `in_ref_con` is an
+// object that implements `render` function.
+extern "C" fn audio_unit_render_callback<R>(
     in_ref_con: *mut c_void,
     io_action_flags: *mut sys::AudioUnitRenderActionFlags,
     in_time_stamp: *const sys::AudioTimeStamp,
     in_bus_number: sys::UInt32,
     in_number_of_frames: sys::UInt32,
-    io_data: *mut sys::AudioBufferList
-) -> sys::OSStatus {
-    let wrapper = in_ref_con as *mut CallbackWrapper;
+    io_data: *mut sys::AudioBufferList,
+) -> sys::OSStatus where R: RenderCallback {
+    let render_callback_object = in_ref_con as *mut R;
     unsafe {
-        (*(*wrapper).callback)(io_action_flags,
-                               in_time_stamp,
-                               in_bus_number,
-                               in_number_of_frames,
-                               io_data)
+        (*render_callback_object).render(
+            io_action_flags,
+            in_time_stamp,
+            in_bus_number,
+            in_number_of_frames,
+            io_data,
+        )
     }
 }

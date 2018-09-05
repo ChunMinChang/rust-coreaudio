@@ -11,3 +11,4 @@ audio_unit = ["coreaudio-sys/audio_unit"]
 [dependencies]
 coreaudio-sys = { version = "0.2", default-features = false }
 core-foundation-sys = { version = "0.6" }
+lazy_static = "1.1.0"

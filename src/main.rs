@@ -1,3 +1,9 @@
+// Introduce `lazy_static` to use a mutable global variable.
+#[macro_use]
+extern crate lazy_static;
+// It needs to wrap a `Mutex` around the global variable to make it mutable.
+use std::sync::Mutex;
+
 extern crate rust_coreaudio;
 use rust_coreaudio::utils;
 use rust_coreaudio::stream;
@@ -88,12 +94,16 @@ impl Synthesizer {
         }
     }
 
-    fn run<T> (&mut self, buffer: &mut rust_coreaudio::stream::Buffer<T>, frames: usize)
+    fn run<T> (&mut self, buffer: &mut [T], frames: usize)
     where T: std::convert::From<SynthesizedData> {
         for frame in 0..frames {
             for channel in 0..self.channels {
                 let data = SynthesizedData(self.phase[channel as usize].sin() * self.volume);
-                buffer.write(frame, channel, data.into());
+
+                let offset = frame * self.channels as usize;
+                let index = offset + channel as usize;
+                buffer[index] = data.into();
+
                 self.phase[channel as usize] += self.get_increment(channel);
             }
         }
@@ -106,32 +116,46 @@ impl Synthesizer {
     }
 }
 
-fn play_sound() {
-    use stream::{Buffer, CallbackArgs, Format, Stream};
+const CHANNELS: u32 = 2;
+const RATE: f64 = 44_100.0;
+const VOLUME: f64 = 0.5;
+lazy_static! {
+    static ref SYNTHESIZER: Mutex<Synthesizer> = Mutex::new(Synthesizer::new(CHANNELS, RATE, VOLUME));
+}
 
-    const CHANNELS: u32 = 2;
-    const RATE: f64 = 44_100.0;
-    let mut synthesizer = Synthesizer::new(CHANNELS, RATE, 0.5);
+fn fill_buffer_float(buffer: &mut [f32], frames: usize) {
+    SYNTHESIZER.lock().unwrap().run(buffer, frames);
+}
 
-    // let format = Format::F32LE;
-    // type Args = CallbackArgs<Buffer<f32>>;
-    let format = Format::S16LE;
-    type Args = CallbackArgs<Buffer<i16>>;
-    let callback = move |args| {
-        let Args { mut data, frames } = args;
-        synthesizer.run(&mut data, frames);
-    };
-    let stm = Stream::new(CHANNELS, format, RATE, callback).unwrap();
+fn play_sound_float() {
+    use stream::{Format, Stream};
 
+    println!("Play `float` stream");
+    let mut stm = Stream::new(CHANNELS, Format::F32LE, RATE, fill_buffer_float).unwrap();
+    stm.init().unwrap();
     stm.start().unwrap();
-
     std::thread::sleep(std::time::Duration::from_millis(1000));
+    stm.stop().unwrap();
+}
 
+fn fill_buffer_short(buffer: &mut [i16], frames: usize) {
+    SYNTHESIZER.lock().unwrap().run(buffer, frames);
+}
+
+fn play_sound_short() {
+    use stream::{Format, Stream};
+
+    println!("Play `short` stream");
+    let mut stm = Stream::new(CHANNELS, Format::S16LE, RATE, fill_buffer_short).unwrap();
+    stm.init().unwrap();
+    stm.start().unwrap();
+    std::thread::sleep(std::time::Duration::from_millis(1000));
     stm.stop().unwrap();
 }
 
 fn main() {
-    play_sound();
+    play_sound_float();
+    play_sound_short();
     // show_result();
     // change_default_devices();
 }
