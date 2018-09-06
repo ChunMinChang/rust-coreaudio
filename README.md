@@ -13,8 +13,6 @@ This is a draft to play CoreAudio APIs in *Rust*. The aim for this project is to
     - [string][gist-string-wrapper]
     - [directly get inner element data from C API][gist-same-size](since their sizes are same!)
     - [CoreAudio][gist-audioobject]
-- Redesign callback mechanism: Save a *callback* member variable in ```Stream``` and call it to fill buffer.
-  - [reference][gist-callback]
 - Use *examples* to separate the example code for *stream* module and *utils* module.
 - **Add tests** for *audio_unit* and *stream* modules.
 
