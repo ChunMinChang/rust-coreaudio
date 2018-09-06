@@ -113,6 +113,7 @@ pub struct Stream<T> {
 // This gives idea about how we set the audio stream here.
 impl<T> Stream<T> {
     pub fn new(channels: u32, format: Format, rate: f64, callback: Callback<T>) -> Result<Self, Error> {
+        assert_eq!(format.byte_size(), size_of::<T>());
         let parameters = Parameters::new(channels, format, rate);
         let unit = AudioUnit::new()?;
         let stm = Stream { callback, parameters, unit };
