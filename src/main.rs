@@ -94,7 +94,7 @@ impl Synthesizer {
         }
     }
 
-    fn run<T> (&mut self, buffers: &mut [&mut [T]])
+    fn run<T> (&mut self, buffers: stream::CallbackArgs<T>)
     where T: std::convert::From<SynthesizedData> {
         assert_eq!(self.channels, buffers.len() as u32);
         // buffers.len() is equal to channels!
@@ -122,7 +122,7 @@ lazy_static! {
     static ref SYNTHESIZER: Mutex<Synthesizer> = Mutex::new(Synthesizer::new(CHANNELS, RATE, VOLUME));
 }
 
-fn fill_buffer_float(buffers: &mut [&mut [f32]]) {
+fn fill_buffer_float(buffers: stream::CallbackArgs<f32>) {
     SYNTHESIZER.lock().unwrap().run(buffers);
 }
 
@@ -137,7 +137,7 @@ fn play_sound_float() {
     stm.stop().unwrap();
 }
 
-fn fill_buffer_short(buffers: &mut[&mut [i16]]) {
+fn fill_buffer_short(buffers: stream::CallbackArgs<i16>) {
     SYNTHESIZER.lock().unwrap().run(buffers);
 }
 

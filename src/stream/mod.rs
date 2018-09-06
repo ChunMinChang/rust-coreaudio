@@ -93,7 +93,8 @@ pub struct AudioData<T> {
     data_type: PhantomData<T>
 }
 
-type Callback<T> = fn(&mut [&mut [T]]);
+pub type CallbackArgs<'a, T> = &'a mut [&'a mut [T]];
+type Callback<T> = fn(CallbackArgs<T>);
 
 // The Stream struct will be converted to a pointer and the pointer will be
 // set as a `custom data` pointer to the underlying `AudioUnit` callback
