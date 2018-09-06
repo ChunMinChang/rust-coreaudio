@@ -188,10 +188,6 @@ fn test_get_property_array() {
 // ------------------------------------
 // Skip now ...
 
-// status_to_error
-// ------------------------------------
-// Skip now ...
-
 // audio_object_get_property_data
 // ------------------------------------
 // Skip now ...

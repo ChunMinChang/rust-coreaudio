@@ -14,6 +14,17 @@ pub enum Error {
     Uninitialized,
 }
 
+impl From<sys::OSStatus> for Error {
+    fn from(status: sys::OSStatus) -> Error {
+        match status {
+            -3000 => Error::InvalidComponentID, // https://developer.apple.com/documentation/coreservices/1559940-anonymous/invalidcomponentid?language=objc
+            sys::kAudioUnitErr_PropertyNotWritable => Error::PropertyNotWritable,
+            sys::kAudioUnitErr_Uninitialized => Error::Uninitialized,
+            s => panic!("Unknown status: {}", s),
+        }
+    }
+}
+
 impl fmt::Debug for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let printable = match self {
@@ -204,17 +215,8 @@ fn get_new_instance(component: sys::AudioComponent) -> Result<sys::AudioComponen
 
 fn convert_to_result(status: sys::OSStatus) -> Result<(), Error> {
     match status {
-        0 => Ok(()), /* sys::noErr */
-        e => Err(status_to_error(e)),
-    }
-}
-
-fn status_to_error(status: sys::OSStatus) -> Error {
-    match status {
-        4294964296 => Error::InvalidComponentID, /* invalidComponentID: -3000 */
-        sys::kAudioUnitErr_PropertyNotWritable => Error::PropertyNotWritable,
-        sys::kAudioUnitErr_Uninitialized => Error::Uninitialized,
-        error => panic!("Unknown error: {}", error),
+        0 => Ok(()), // 0 is sys::noErr
+        s => Err(s.into()),
     }
 }
 

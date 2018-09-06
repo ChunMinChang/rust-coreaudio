@@ -89,14 +89,6 @@ fn test_get_new_instance() {
 // ------------------------------------
 // Skip now ...
 
-// status_to_error
-// ------------------------------------
-// Skip now ...
-
-// to_bindgen_type
-// ------------------------------------
-// Skip now ...
-
 // audio_unit_get_property_info
 // ------------------------------------
 // Skip now ...

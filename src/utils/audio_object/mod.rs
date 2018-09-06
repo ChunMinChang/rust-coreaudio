@@ -1,6 +1,6 @@
-// Use `sys` as a prefix since we need to map the native error statuses like
+// Using `sys` as a prefix since we need to map the native error statuses like
 // `kAudioHardwareBadObjectError` or `kAudioHardwareUnknownPropertyError` into
-// our custom error type in `status_to_error()`. If we directly use
+// our custom error type in `Error::from()`. If we directly use
 // `kAudioHardwareBadObjectError` to compare with the given OSStatus variable,
 // the `kAudioHardwareBadObjectError` in the `match` arm will be a new variable
 // instead of the `kAudioHardwareBadObjectError` we expect. The following is an
@@ -9,12 +9,13 @@
 // match status { // status' type is `OSStatus`.
 //     kAudioHardwareBadObjectError => { ... }          // match to all status
 //     kAudioHardwareUnknownPropertyError => { ... }    // unreachable pattern
-//     ... => => { ... }                                // unreachable pattern
+//     ... => { ... }                                   // unreachable pattern
 // }
 //
-// The `kAudioHardwareBadObjectError` is a new variable introducec in match
+// The `kAudioHardwareBadObjectError` is a new variable introduced in match
 // block and it will match to all given `status`. It's not the
-// `kAudioHardwareBadObjectError` defined in a `OSStatus` enum in CoreAudio.
+// `kAudioHardwareBadObjectError` defined in a `OSStatus` enum in CoreAudio
+// as we expected.
 extern crate coreaudio_sys as sys;
 
 use std::fmt; // For fmt::{Debug, Formatter, Result}
@@ -28,6 +29,21 @@ pub enum Error {
     BadObject,
     UnknownProperty,
     SizeIsZero,
+}
+
+impl From<sys::OSStatus> for Error {
+    fn from(status: sys::OSStatus) -> Error {
+        type BindgenOsstatusError = u32;
+        fn to_bindgen_type(status: sys::OSStatus) -> BindgenOsstatusError {
+            status as BindgenOsstatusError
+        }
+
+        match to_bindgen_type(status) {
+            sys::kAudioHardwareBadObjectError => Error::BadObject,
+            sys::kAudioHardwareUnknownPropertyError => Error::UnknownProperty,
+            s => panic!("Unknown status: {}", s),
+        }
+    }
 }
 
 impl fmt::Debug for Error {
@@ -115,23 +131,10 @@ fn non_empty_size(result: Result<usize, Error>) -> Result<usize, Error> {
 }
 
 fn convert_to_result(status: sys::OSStatus) -> Result<(), Error> {
-    match to_bindgen_type(status) {
-        sys::kAudioHardwareNoError => Ok(()),
-        e => Err(status_to_error(e)),
-    }
-}
-
-fn status_to_error(status: BindgenOsstatus) -> Error {
     match status {
-        sys::kAudioHardwareBadObjectError => Error::BadObject,
-        sys::kAudioHardwareUnknownPropertyError => Error::UnknownProperty,
-        error => panic!("Unknown error: {}", error),
+        0 => Ok(()), // 0 is sys::kAudioHardwareNoError.
+        s => Err(s.into()),
     }
-}
-
-type BindgenOsstatus = u32;
-fn to_bindgen_type(status: sys::OSStatus) -> BindgenOsstatus {
-    status as BindgenOsstatus
 }
 
 fn audio_object_get_property_data<T>(
