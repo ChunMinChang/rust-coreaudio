@@ -94,17 +94,16 @@ impl Synthesizer {
         }
     }
 
-    fn run<T> (&mut self, buffer: &mut [T], frames: usize)
+    fn run<T> (&mut self, buffers: &mut [&mut [T]])
     where T: std::convert::From<SynthesizedData> {
-        for frame in 0..frames {
-            for channel in 0..self.channels {
-                let data = SynthesizedData(self.phase[channel as usize].sin() * self.volume);
-
-                let offset = frame * self.channels as usize;
-                let index = offset + channel as usize;
-                buffer[index] = data.into();
-
-                self.phase[channel as usize] += self.get_increment(channel);
+        assert_eq!(self.channels, buffers.len() as u32);
+        // buffers.len() is equal to channels!
+        for (channel, buffer) in buffers.iter_mut().enumerate() {
+            // buffer.len() is equal to frames!
+            for data in buffer.iter_mut() {
+                let channel_data = SynthesizedData(self.phase[channel].sin() * self.volume);
+                *data = channel_data.into();
+                self.phase[channel as usize] += self.get_increment(channel as u32);
             }
         }
     }
@@ -123,8 +122,8 @@ lazy_static! {
     static ref SYNTHESIZER: Mutex<Synthesizer> = Mutex::new(Synthesizer::new(CHANNELS, RATE, VOLUME));
 }
 
-fn fill_buffer_float(buffer: &mut [f32], frames: usize) {
-    SYNTHESIZER.lock().unwrap().run(buffer, frames);
+fn fill_buffer_float(buffers: &mut [&mut [f32]]) {
+    SYNTHESIZER.lock().unwrap().run(buffers);
 }
 
 fn play_sound_float() {
@@ -138,8 +137,8 @@ fn play_sound_float() {
     stm.stop().unwrap();
 }
 
-fn fill_buffer_short(buffer: &mut [i16], frames: usize) {
-    SYNTHESIZER.lock().unwrap().run(buffer, frames);
+fn fill_buffer_short(buffers: &mut[&mut [i16]]) {
+    SYNTHESIZER.lock().unwrap().run(buffers);
 }
 
 fn play_sound_short() {

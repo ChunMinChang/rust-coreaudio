@@ -40,7 +40,9 @@ impl Format {
             Format::S16LE => sys::kAudioFormatFlagIsSignedInteger,
             Format::F32LE => sys::kAudioFormatFlagIsFloat,
         };
-        flags | sys::kLinearPCMFormatFlagIsPacked
+        flags |
+        sys::kLinearPCMFormatFlagIsPacked |
+        sys::kLinearPCMFormatFlagIsNonInterleaved
     }
 }
 
@@ -61,10 +63,12 @@ impl Parameters {
         let byte_size = self.format.byte_size() as u32;
         let bits_per_channel = byte_size * 8;
         let frames_per_packet = 1;
-        // Since the channels in the buffer is set to interleaved
-        // by AudioFormatFlags here, we need to multiply `self.channels`
-        // with `byte_size` to set `bytes_per_frame`.
-        let bytes_per_frame = byte_size * self.channels;
+        // The channels in the buffer is set to non-interleaved by
+        // AudioFormatFlags here, hence the `bytes_per_frame` is same as
+        // `bytes_per_frame` and `AudioBufferList.mNumberBuffers` received from
+        // callback `audio_unit_render_callback` is same as the numbeb of
+        // channels we have.
+        let bytes_per_frame = byte_size;
         let bytes_per_packet = bytes_per_frame * frames_per_packet;
         sys::AudioStreamBasicDescription {
             mSampleRate: self.rate,
@@ -89,7 +93,7 @@ pub struct AudioData<T> {
     data_type: PhantomData<T>
 }
 
-type Callback<T> = fn(&mut [T], usize);
+type Callback<T> = fn(&mut [&mut [T]]);
 
 // The Stream struct will be converted to a pointer and the pointer will be
 // set as a `custom data` pointer to the underlying `AudioUnit` callback
@@ -178,12 +182,20 @@ impl<T> Stream<T> {
     }
 
     fn get_buffer_data (&self, data: AudioData<T>) -> sys::OSStatus {
-        let ptr = data.buffers[0].mData as *mut T;
-        let channels = data.buffers[0].mNumberChannels as usize; // interleaved channels.
-        let frames = data.frames;
-        let len = channels * frames;
-        let buffer = unsafe { slice::from_raw_parts_mut(ptr, len) };
-        (self.callback)(buffer, frames);
+        let mut channel_buffers = Vec::new();
+        assert_eq!(data.buffers.len() as u32, self.parameters.channels);
+        for buffer in data.buffers {
+            assert_eq!(buffer.mNumberChannels, 1);
+            assert_eq!(
+                (data.frames * size_of::<T>()) as u32,
+                buffer.mDataByteSize
+            );
+            let ptr = buffer.mData as *mut T;
+            let len = data.frames;
+            let channel_buffer = unsafe { slice::from_raw_parts_mut(ptr, len) };
+            channel_buffers.push(channel_buffer);
+        }
+        (self.callback)(&mut channel_buffers);
         sys::noErr as sys::OSStatus
     }
 }
