@@ -28,14 +28,14 @@ pub enum Format {
 }
 
 impl Format {
-    pub fn byte_size(&self) -> usize {
+    fn byte_size(&self) -> usize {
         match self {
             Format::S16LE => size_of::<i16>(),
             Format::F32LE => size_of::<f32>(),
         }
     }
 
-    pub fn to_format_flags(&self) -> sys::AudioFormatFlags {
+    fn to_format_flags(&self) -> sys::AudioFormatFlags {
         let flags = match self {
             Format::S16LE => sys::kAudioFormatFlagIsSignedInteger,
             Format::F32LE => sys::kAudioFormatFlagIsFloat,
@@ -46,7 +46,7 @@ impl Format {
     }
 }
 
-pub struct Parameters {
+struct Parameters {
     channels: u32,
     format: Format,
     rate: f64,
@@ -87,7 +87,7 @@ impl Parameters {
 // A wrapper around the pointer to the `AudioBufferList::mBuffers` array.
 // Using `PhantomData` to carry the target type when passing this struct
 // from functions to functions.
-pub struct AudioData<T> {
+struct AudioData<T> {
     buffers: &'static mut [sys::AudioBuffer], // The list of audio buffers.
     frames: usize, // The number of frames in each channel.
     data_type: PhantomData<T>
