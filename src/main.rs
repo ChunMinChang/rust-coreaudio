@@ -156,6 +156,6 @@ fn play_sound_short() {
 fn main() {
     play_sound_float();
     play_sound_short();
-    // show_result();
-    // change_default_devices();
+    show_result();
+    change_default_devices();
 }
