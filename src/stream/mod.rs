@@ -61,6 +61,9 @@ impl Parameters {
         let byte_size = self.format.byte_size() as u32;
         let bits_per_channel = byte_size * 8;
         let frames_per_packet = 1;
+        // Since the channels in the buffer is set to interleaved
+        // by AudioFormatFlags here, we need to multiply `self.channels`
+        // with `byte_size` to set `bytes_per_frame`.
         let bytes_per_frame = byte_size * self.channels;
         let bytes_per_packet = bytes_per_frame * frames_per_packet;
         sys::AudioStreamBasicDescription {
@@ -100,6 +103,9 @@ pub struct Stream<T> {
     unit: AudioUnit,
 }
 
+// Learn AUHAL concepts of `scope` and `bus (element)` from below link:
+// https://developer.apple.com/library/archive/technotes/tn2091/_index.html
+// This gives idea about how we set the audio stream here.
 impl<T> Stream<T> {
     pub fn new(channels: u32, format: Format, rate: f64, callback: Callback<T>) -> Result<Self, Error> {
         let parameters = Parameters::new(channels, format, rate);
@@ -107,12 +113,13 @@ impl<T> Stream<T> {
         let stm = Stream { callback, parameters, unit };
         // Don't initialize the stream here!
         // The memory address of `stm` is different from `x`
-        // where `x = Stream::new(...)` outside.
-        // If we call `stm.set_callback()` here, the `self` of
-        // `set_callback` here is `stm` and `stm` will be freed
+        // where x is returned `stm` outside by `x = Stream::new(...)`.
+        // If we call `stm.init()` or `stm.set_callback()` here, the `self` of
+        // `stm.init()` or `set_callback` are `stm` and it will be freed
         // after `stm` is returned from `new`. Hence the `inputProcRefCon`
         // in `set_callback` will be assigned to a dangling pointer and lead
-        // a segment fault or bus error when trying to use `in_ref_con` from
+        // a segment fault or bus error when trying to use `in_ref_con`, which
+        // is a pointer pointing a freed memory chunk, in
         // `audio_unit_render_callback`.
         Ok(stm)
     }
