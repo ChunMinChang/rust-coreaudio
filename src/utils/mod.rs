@@ -2,9 +2,9 @@ extern crate core_foundation_sys;
 extern crate coreaudio_sys;
 
 mod audio_object;
-mod string_helper;
+mod string_wrapper;
 
-use self::core_foundation_sys::string::CFStringRef;
+use self::string_wrapper::StringRef;
 use self::coreaudio_sys::{
     kAudioObjectPropertyName,
     kAudioHardwarePropertyDevices,
@@ -111,7 +111,7 @@ pub enum Scope {
 // Using PartialEq for comparison.
 #[derive(PartialEq)]
 pub enum Error {
-    ConversionFailed(string_helper::Error),
+    ConversionFailed(string_wrapper::Error),
     InvalidParameters(audio_object::Error),
     NoDeviceFound,
     SetSameDevice,
@@ -125,9 +125,9 @@ impl From<audio_object::Error> for Error {
     }
 }
 
-// To convert an string_helper::Error to a Error.
-impl From<string_helper::Error> for Error {
-    fn from(e: string_helper::Error) -> Error {
+// To convert an string_wrapper::Error to a Error.
+impl From<string_wrapper::Error> for Error {
+    fn from(e: string_wrapper::Error) -> Error {
         Error::ConversionFailed(e)
     }
 }
@@ -197,23 +197,27 @@ pub fn get_device_label(id: AudioObjectID, scope: &Scope) -> Result<String, Erro
 }
 
 pub fn get_device_name(id: AudioObjectID) -> Result<String, Error> {
-    let name: CFStringRef =
-        audio_object::get_property_data::<CFStringRef>(id, &DEVICE_NAME_PROPERTY_ADDRESS)?;
-    string_helper::to_string(name).map_err(Error::ConversionFailed)
-    // TODO: The memory pointed by `name` will be free in to_string(...).
-    //       Find a way to move `name` to prevent it from being a dangling
-    //       pointer.
+    // Trick: we can use the `StringRef` instance to get the property data
+    // directly. `get_property_data` will create a void-type memory buffer with
+    // size of the type we define to get the byte-data from underlying OS API.
+    // Then the buffer filled with the byte-data will be converted to a variable
+    // whose type is defined by us. Since the size_of::<StringRef>() is equal to
+    // size_of::<CFStringRef>(), the (single) inner element of this tuple struct
+    // is filled directly by calling `get_property_data`.
+    let name: StringRef =
+        audio_object::get_property_data::<StringRef>(id, &DEVICE_NAME_PROPERTY_ADDRESS)?;
+    name.into_string().map_err(Error::ConversionFailed)
 }
 
 pub fn get_device_source_name(id: AudioObjectID, scope: &Scope) -> Result<String, Error> {
     let mut source: u32 = get_device_source(id, scope)?;
-    let mut name: CFStringRef = ptr::null();
+    let mut name: StringRef = StringRef::new(ptr::null());
 
     let mut translation: AudioValueTranslation = AudioValueTranslation {
         mInputData: &mut source as *mut u32 as *mut c_void,
         mInputDataSize: mem::size_of::<u32>() as u32,
-        mOutputData: &mut name as *mut CFStringRef as *mut c_void,
-        mOutputDataSize: mem::size_of::<CFStringRef>() as u32,
+        mOutputData: &mut name as *mut StringRef as *mut c_void,
+        mOutputDataSize: mem::size_of::<StringRef>() as u32,
     };
 
     let address: &AudioObjectPropertyAddress = if scope == &Scope::Input {
@@ -221,11 +225,10 @@ pub fn get_device_source_name(id: AudioObjectID, scope: &Scope) -> Result<String
     } else {
         &OUTPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS
     };
+    // Trick: The trick to use the `StringRef` instance is same as
+    // `get_device_name`.
     audio_object::get_property_data_with_ptr(id, address, &mut translation)?;
-    string_helper::to_string(name).map_err(Error::ConversionFailed)
-    // TODO: The memory pointed by `name` will be free in to_string(...).
-    //       Find a way to move `name` to prevent it from being a dangling
-    //       pointer.
+    name.into_string().map_err(Error::ConversionFailed)
 }
 
 pub fn set_default_device(id: AudioObjectID, scope: &Scope) -> Result<(), Error> {
