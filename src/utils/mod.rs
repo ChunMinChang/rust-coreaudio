@@ -189,6 +189,8 @@ pub fn get_all_device_ids() -> Result<Vec<AudioObjectID>, Error> {
 }
 
 pub fn get_device_label(id: AudioObjectID, scope: &Scope) -> Result<String, Error> {
+    // Some USB headset(e.g., Plantronics .Audio 628) fails to get its source.
+    // In that case, we return device name instead.
     match get_device_source_name(id, scope) {
         Ok(name) => Ok(name),
         Err(Error::WrongScope) => Err(Error::WrongScope),
