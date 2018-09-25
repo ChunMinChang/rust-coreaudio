@@ -147,22 +147,38 @@ impl fmt::Debug for Error {
 
 // Public APIs
 // ============================================================================
-pub fn get_default_device_id(scope: &Scope) -> Result<AudioObjectID, Error> {
-    let address: &AudioObjectPropertyAddress = if scope == &Scope::Input {
-        &DEFAULT_INPUT_DEVICE_PROPERTY_ADDRESS
-    } else {
-        &DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS
-    };
-    let id: AudioObjectID =
-        audio_object::get_property_data::<AudioObjectID>(kAudioObjectSystemObject, address)?;
-    // `id` will be kAudioObjectUnknown when there is no valid device.
-    // Return `NoDeviceFound` error in this case.
-    if id == kAudioObjectUnknown {
-        Err(Error::NoDeviceFound)
-    } else {
-        Ok(id)
+struct AudioSystemObject(audio_object::AudioObject);
+
+impl AudioSystemObject {
+    fn new() -> Self {
+        AudioSystemObject(audio_object::AudioObject::new(kAudioObjectSystemObject))
+    }
+
+    fn get_default_device(
+        &self,
+        scope: &Scope
+    ) -> Result<audio_object::AudioObject, Error> {
+        let address: &AudioObjectPropertyAddress = if scope == &Scope::Input {
+            &DEFAULT_INPUT_DEVICE_PROPERTY_ADDRESS
+        } else {
+            &DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS
+        };
+        let device = self.0.get_property_data::<audio_object::AudioObject>(address)?;
+        // We will get an unknow device when there is no available device at this time
+        if device.is_unknown() {
+            Err(Error::NoDeviceFound)
+        } else {
+            Ok(device)
+        }
     }
 }
+
+pub fn get_default_device(scope: &Scope) -> Result<audio_object::AudioObject, Error> {
+    let system_device = AudioSystemObject::new();
+    system_device.get_default_device(scope)
+}
+
+// TODO: Replace all the following AudioObjectID by AudioObject!
 
 pub fn in_scope(id: AudioObjectID, scope: &Scope) -> Result<bool, Error> {
     let streams = number_of_streams(id, scope)?;
@@ -243,8 +259,8 @@ pub fn set_default_device(id: AudioObjectID, scope: &Scope) -> Result<(), Error>
     if !in_scope(id, scope)? {
         return Err(Error::WrongScope);
     }
-    let default_id = get_default_device_id(scope)?;
-    if id == default_id {
+    let default_device = get_default_device(scope)?;
+    if id == default_device.into() {
         return Err(Error::SetSameDevice);
     }
     let address: &AudioObjectPropertyAddress = if scope == &Scope::Input {

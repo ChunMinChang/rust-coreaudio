@@ -3,17 +3,17 @@ use super::*;
 // Tests for Public Functions
 // ============================================================================
 
-// get_default_device_id
+// get_default_device
 // ------------------------------------
 #[test]
-fn test_get_default_device_id() {
+fn test_get_default_device() {
     // If we have default input/output devices, then they must be valid ids.
-    if let Ok(id) = get_default_device_id(&Scope::Input) {
-        assert_ne!(id, kAudioObjectUnknown);
+    if let Ok(device) = get_default_device(&Scope::Input) {
+        assert!(!device.is_unknown());
     }
 
-    if let Ok(id) = get_default_device_id(&Scope::Output) {
-        assert_ne!(id, kAudioObjectUnknown);
+    if let Ok(device) = get_default_device(&Scope::Output) {
+        assert!(!device.is_unknown());
     }
 }
 
@@ -34,14 +34,14 @@ fn test_in_scope_with_invalid_id() {
 
 #[test]
 fn test_in_scope() {
-    if let Ok(id) = get_default_device_id(&Scope::Input) {
-        assert_ne!(id, kAudioObjectUnknown);
-        assert!(in_scope(id, &Scope::Input).unwrap());
+    if let Ok(device) = get_default_device(&Scope::Input) {
+        assert!(!device.is_unknown());
+        assert!(in_scope(device.into(), &Scope::Input).unwrap());
     }
 
-    if let Ok(id) = get_default_device_id(&Scope::Output) {
-        assert_ne!(id, kAudioObjectUnknown);
-        assert!(in_scope(id, &Scope::Output).unwrap());
+    if let Ok(device) = get_default_device(&Scope::Output) {
+        assert!(!device.is_unknown());
+        assert!(in_scope(device.into(), &Scope::Output).unwrap());
     }
 }
 
@@ -49,11 +49,11 @@ fn test_in_scope() {
 // ------------------------------------
 #[test]
 fn test_get_device_ids() {
-    if get_default_device_id(&Scope::Input).is_ok() {
+    if get_default_device(&Scope::Input).is_ok() {
         assert!(!get_device_ids(&Scope::Input).unwrap().is_empty());
     }
 
-    if get_default_device_id(&Scope::Output).is_ok() {
+    if get_default_device(&Scope::Output).is_ok() {
         assert!(!get_device_ids(&Scope::Output).unwrap().is_empty());
     }
 }
@@ -62,8 +62,8 @@ fn test_get_device_ids() {
 // ------------------------------------
 #[test]
 fn test_get_all_device_ids() {
-    if get_default_device_id(&Scope::Input).is_ok() ||
-       get_default_device_id(&Scope::Output).is_ok()
+    if get_default_device(&Scope::Input).is_ok() ||
+       get_default_device(&Scope::Output).is_ok()
     {
         assert!(!get_all_device_ids().unwrap().is_empty());
     }
@@ -86,8 +86,9 @@ fn test_get_device_label_with_invalid_id() {
 
 #[test]
 fn test_get_device_label_with_invalid_scope() {
-    if let Ok(id) = get_default_device_id(&Scope::Input) {
-        assert_ne!(id, kAudioObjectUnknown);
+    if let Ok(device) = get_default_device(&Scope::Input) {
+        assert!(!device.is_unknown());
+        let id = device.into();
         let is_output = in_scope(id, &Scope::Output).unwrap();
         if !is_output {
             assert_eq!(
@@ -97,8 +98,9 @@ fn test_get_device_label_with_invalid_scope() {
         }
     }
 
-    if let Ok(id) = get_default_device_id(&Scope::Output) {
-        assert_ne!(id, kAudioObjectUnknown);
+    if let Ok(device) = get_default_device(&Scope::Output) {
+        assert!(!device.is_unknown());
+        let id = device.into();
         let is_input = in_scope(id, &Scope::Input).unwrap();
         if !is_input {
             assert_eq!(
@@ -111,14 +113,14 @@ fn test_get_device_label_with_invalid_scope() {
 
 #[test]
 fn test_get_device_label() {
-    if let Ok(id) = get_default_device_id(&Scope::Input) {
-        assert_ne!(id, kAudioObjectUnknown);
-        assert!(!get_device_label(id, &Scope::Input).unwrap().is_empty());
+    if let Ok(device) = get_default_device(&Scope::Input) {
+        assert!(!device.is_unknown());
+        assert!(!get_device_label(device.into(), &Scope::Input).unwrap().is_empty());
     }
 
-    if let Ok(id) = get_default_device_id(&Scope::Output) {
-        assert_ne!(id, kAudioObjectUnknown);
-        assert!(!get_device_label(id, &Scope::Output).unwrap().is_empty());
+    if let Ok(device) = get_default_device(&Scope::Output) {
+        assert!(!device.is_unknown());
+        assert!(!get_device_label(device.into(), &Scope::Output).unwrap().is_empty());
     }
 }
 
@@ -136,14 +138,14 @@ fn test_get_device_name_with_invalid_id() {
 #[test]
 fn test_get_device_name() {
     // If we have default input/output devices, then they must have non-empty names.
-    if let Ok(id) = get_default_device_id(&Scope::Input) {
-        assert_ne!(id, kAudioObjectUnknown);
-        assert!(!get_device_name(id).unwrap().is_empty());
+    if let Ok(device) = get_default_device(&Scope::Input) {
+        assert!(!device.is_unknown());
+        assert!(!get_device_name(device.into()).unwrap().is_empty());
     }
 
-    if let Ok(id) = get_default_device_id(&Scope::Output) {
-        assert_ne!(id, kAudioObjectUnknown);
-        assert!(!get_device_name(id).unwrap().is_empty());
+    if let Ok(device) = get_default_device(&Scope::Output) {
+        assert!(!device.is_unknown());
+        assert!(!get_device_name(device.into()).unwrap().is_empty());
     }
 }
 
@@ -164,8 +166,9 @@ fn test_get_device_source_name_with_invalid_id() {
 
 #[test]
 fn test_get_device_source_name_with_invalid_scope() {
-    if let Ok(id) = get_default_device_id(&Scope::Input) {
-        assert_ne!(id, kAudioObjectUnknown);
+    if let Ok(device) = get_default_device(&Scope::Input) {
+        assert!(!device.is_unknown());
+        let id = device.into();
         let is_output = in_scope(id, &Scope::Output).unwrap();
         if !is_output {
             assert_eq!(
@@ -175,8 +178,9 @@ fn test_get_device_source_name_with_invalid_scope() {
         }
     }
 
-    if let Ok(id) = get_default_device_id(&Scope::Output) {
-        assert_ne!(id, kAudioObjectUnknown);
+    if let Ok(device) = get_default_device(&Scope::Output) {
+        assert!(!device.is_unknown());
+        let id = device.into();
         let is_input = in_scope(id, &Scope::Input).unwrap();
         if !is_input {
             assert_eq!(
@@ -191,9 +195,9 @@ fn test_get_device_source_name_with_invalid_scope() {
 fn test_get_device_source_name() {
     // Even we have default input/output devices, we may not get the source
     // names of the devices.
-    if let Ok(id) = get_default_device_id(&Scope::Input) {
-        assert_ne!(id, kAudioObjectUnknown);
-        match get_device_source_name(id, &Scope::Input) {
+    if let Ok(device) = get_default_device(&Scope::Input) {
+        assert!(!device.is_unknown());
+        match get_device_source_name(device.into(), &Scope::Input) {
             Ok(name) => {
                 assert!(!name.is_empty());
             }
@@ -206,9 +210,9 @@ fn test_get_device_source_name() {
         }
     }
 
-    if let Ok(id) = get_default_device_id(&Scope::Output) {
-        assert_ne!(id, kAudioObjectUnknown);
-        match get_device_source_name(id, &Scope::Output) {
+    if let Ok(device) = get_default_device(&Scope::Output) {
+        assert!(!device.is_unknown());
+        match get_device_source_name(device.into(), &Scope::Output) {
             Ok(name) => {
                 assert!(!name.is_empty());
             }
@@ -256,18 +260,18 @@ fn test_set_default_device_with_invalid_id() {
 // $ cargo test -- set_default_device --test-threads 1
 #[test]
 fn test_set_default_device_with_same_device() {
-    if let Ok(id) = get_default_device_id(&Scope::Input) {
-        assert_ne!(id, kAudioObjectUnknown);
+    if let Ok(device) = get_default_device(&Scope::Input) {
+        assert!(!device.is_unknown());
         assert_eq!(
-            set_default_device(id, &Scope::Input).unwrap_err(),
+            set_default_device(device.into(), &Scope::Input).unwrap_err(),
             Error::SetSameDevice
         );
     }
 
-    if let Ok(id) = get_default_device_id(&Scope::Output) {
-        assert_ne!(id, kAudioObjectUnknown);
+    if let Ok(device) = get_default_device(&Scope::Output) {
+        assert!(!device.is_unknown());
         assert_eq!(
-            set_default_device(id, &Scope::Output).unwrap_err(),
+            set_default_device(device.into(), &Scope::Output).unwrap_err(),
             Error::SetSameDevice
         );
     }
@@ -275,8 +279,9 @@ fn test_set_default_device_with_same_device() {
 
 #[test]
 fn test_set_default_device_with_invalid_scope() {
-    if let Ok(id) = get_default_device_id(&Scope::Input) {
-        assert_ne!(id, kAudioObjectUnknown);
+    if let Ok(device) = get_default_device(&Scope::Input) {
+        assert!(!device.is_unknown());
+        let id = device.into();
         let is_output = in_scope(id, &Scope::Output).unwrap();
         if !is_output {
             assert_eq!(
@@ -286,8 +291,9 @@ fn test_set_default_device_with_invalid_scope() {
         }
     }
 
-    if let Ok(id) = get_default_device_id(&Scope::Output) {
-        assert_ne!(id, kAudioObjectUnknown);
+    if let Ok(device) = get_default_device(&Scope::Output) {
+        assert!(!device.is_unknown());
+        let id = device.into();
         let is_input = in_scope(id, &Scope::Input).unwrap();
         if !is_input {
             assert_eq!(
@@ -304,10 +310,10 @@ fn test_change_default_device(scope: &Scope) {
         return;
     }
 
-    let current_device = get_default_device_id(scope).unwrap();
+    let current_device = get_default_device(scope).unwrap();
     let new_device = devices
         .into_iter()
-        .find(|&device| device != current_device)
+        .find(|&device| device != current_device.clone().into()) // TODO: ugly!
         .unwrap();
     assert!(set_default_device(new_device, scope).is_ok());
 }
@@ -339,8 +345,9 @@ fn test_get_device_source_with_invalid_id() {
 
 #[test]
 fn test_get_device_source_with_invalid_scope() {
-    if let Ok(id) = get_default_device_id(&Scope::Input) {
-        assert_ne!(id, kAudioObjectUnknown);
+    if let Ok(device) = get_default_device(&Scope::Input) {
+        assert!(!device.is_unknown());
+        let id = device.into();
         let is_output = in_scope(id, &Scope::Output).unwrap();
         if !is_output {
             assert_eq!(
@@ -350,8 +357,9 @@ fn test_get_device_source_with_invalid_scope() {
         }
     }
 
-    if let Ok(id) = get_default_device_id(&Scope::Output) {
-        assert_ne!(id, kAudioObjectUnknown);
+    if let Ok(device) = get_default_device(&Scope::Output) {
+        assert!(!device.is_unknown());
+        let id = device.into();
         let is_input = in_scope(id, &Scope::Input).unwrap();
         if !is_input {
             assert_eq!(
@@ -365,16 +373,16 @@ fn test_get_device_source_with_invalid_scope() {
 #[test]
 fn test_get_device_source() {
     // If we can get source from input/output devices, then they must be non-zero values.
-    if let Ok(id) = get_default_device_id(&Scope::Input) {
-        assert_ne!(id, kAudioObjectUnknown);
-        if let Ok(source) = get_device_source(id, &Scope::Input) {
+    if let Ok(device) = get_default_device(&Scope::Input) {
+        assert!(!device.is_unknown());
+        if let Ok(source) = get_device_source(device.into(), &Scope::Input) {
             assert_ne!(source, 0);
         }
     }
 
-    if let Ok(id) = get_default_device_id(&Scope::Output) {
-        assert_ne!(id, kAudioObjectUnknown);
-        if let Ok(source) = get_device_source(id, &Scope::Output) {
+    if let Ok(device) = get_default_device(&Scope::Output) {
+        assert!(!device.is_unknown());
+        if let Ok(source) = get_device_source(device.into(), &Scope::Output) {
             assert_ne!(source, 0);
         }
     }
@@ -397,11 +405,11 @@ fn test_number_of_streams_with_invalid_id() {
 
 #[test]
 fn test_number_of_streams() {
-    if let Ok(id) = get_default_device_id(&Scope::Input) {
-        assert!(number_of_streams(id, &Scope::Input).unwrap() > 0);
+    if let Ok(device) = get_default_device(&Scope::Input) {
+        assert!(number_of_streams(device.into(), &Scope::Input).unwrap() > 0);
     }
 
-    if let Ok(id) = get_default_device_id(&Scope::Output) {
-        assert!(number_of_streams(id, &Scope::Output).unwrap() > 0);
+    if let Ok(device) = get_default_device(&Scope::Output) {
+        assert!(number_of_streams(device.into(), &Scope::Output).unwrap() > 0);
     }
 }

@@ -24,8 +24,8 @@ fn show_device_info(id: u32) {
 }
 
 fn get_device_info(id: u32, scope: &utils::Scope) -> String {
-    let default_id = utils::get_default_device_id(scope).unwrap();
-    let mut info = String::from(if id == default_id { "(default " } else { "(" });
+    let default_device = utils::get_default_device(scope).unwrap();
+    let mut info = String::from(if id == default_device.into() { "(default " } else { "(" });
     info += (to_string(scope) + ") ").as_ref();
     info += utils::get_device_label(id, scope).unwrap().as_ref();
     info
@@ -50,10 +50,10 @@ fn change_default_device(scope: &utils::Scope) {
         return;
     }
 
-    let current_device = utils::get_default_device_id(scope).unwrap();
+    let current_device = utils::get_default_device(scope).unwrap();
     let new_device = devices
         .into_iter()
-        .find(|&device| device != current_device)
+        .find(|&device| device != current_device.clone().into()) // TODO: Ugly!
         .unwrap();
     assert!(utils::set_default_device(new_device, scope).is_ok());
 }

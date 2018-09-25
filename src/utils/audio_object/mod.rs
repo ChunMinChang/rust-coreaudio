@@ -59,6 +59,42 @@ impl fmt::Debug for Error {
 
 // Public APIs
 // ============================================================================
+// TODO: 1. Consider wrapping sys::AudioObjectPropertyAddress into a
+//          single-element tuple struct.
+//       2. Check if we need Clone for AudioObject after replacing all
+//          sys::AudioObjectID by AudioObject in utils/mod.rs
+#[derive(Clone, PartialEq)]
+pub struct AudioObject(sys::AudioObjectID);
+
+impl AudioObject {
+    pub fn new(id: sys::AudioObjectID) -> Self {
+        AudioObject(id)
+    }
+    pub fn is_unknown(&self) -> bool {
+        self.0 == sys::kAudioObjectUnknown
+    }
+    pub fn get_property_data<T>(
+        &self,
+        address: &sys::AudioObjectPropertyAddress,
+    ) -> Result<T, Error> {
+        get_property_data::<T>(self.0, address)
+    }
+}
+
+// Cast sys::AudioObjectID into AudioObject.
+impl From<sys::AudioObjectID> for AudioObject {
+    fn from(id: sys::AudioObjectID) -> Self {
+        AudioObject::new(id)
+    }
+}
+
+// Cast AudioObject into sys::AudioObjectID.
+impl Into<sys::AudioObjectID> for AudioObject {
+    fn into(self) -> sys::AudioObjectID {
+        self.0
+    }
+}
+
 pub fn get_property_data<T>(
     id: sys::AudioObjectID,
     address: &sys::AudioObjectPropertyAddress,
