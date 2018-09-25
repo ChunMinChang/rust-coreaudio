@@ -101,6 +101,7 @@ pub fn get_property_data<T>(
 ) -> Result<T, Error> {
     // assert!(id != sys::kAudioObjectUnknown, "Bad AudioObjectID!");
     // Use `mem::uninitialized()` to bypasses memory-initialization checks.
+    // TODO: Replace `mem::uninitialized()` by `Default::default()`.
     let mut data: T = unsafe { mem::uninitialized() };
     get_property_data_with_ptr(id, address, &mut data)?;
     Ok(data)

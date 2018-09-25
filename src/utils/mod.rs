@@ -5,6 +5,7 @@ mod audio_object;
 mod string_wrapper;
 
 use self::string_wrapper::StringRef;
+use self::core_foundation_sys::string::CFStringRef;
 use self::coreaudio_sys::{
     kAudioObjectPropertyName,
     kAudioHardwarePropertyDevices,
@@ -215,15 +216,24 @@ pub fn get_device_label(id: AudioObjectID, scope: &Scope) -> Result<String, Erro
 }
 
 pub fn get_device_name(id: AudioObjectID) -> Result<String, Error> {
-    // Trick: we can use the `StringRef` instance to get the property data
-    // directly. `get_property_data` will create a void-type memory buffer with
-    // size of the type we define to get the byte-data from underlying OS API.
-    // Then the buffer filled with the byte-data will be converted to a variable
-    // whose type is defined by us. Since the size_of::<StringRef>() is equal to
-    // size_of::<CFStringRef>(), the (single) inner element of this tuple struct
-    // is filled directly by calling `get_property_data`.
-    let name: StringRef =
-        audio_object::get_property_data::<StringRef>(id, &DEVICE_NAME_PROPERTY_ADDRESS)?;
+    // It's dangerous to use `StringRef` directly to get the string. It only
+    // works when `get_property_data::<StringRef>(...)` returns Ok. The size of
+    // `CFStringRef` is equal to the size of `StringRef`, so the data of
+    // `CFStringRef` can be storied into the memory of `StringRef` directly
+    // (since their memory sizes are same) by calling `get_property_data`.
+    // However, `get_property_data::<StringRef>(...)` leads to a memory error
+    // when the `get_property_data` fails. The `uninitialized` data allocated
+    // in `get_property_data` will be dropped if the calling fails. When the
+    // `StringRef::drop()` is called, the `CFRelease()` will free the memory
+    // pointed by the inner `CFStringRef`. The `CFStringRef` is set to a random
+    // value by `mem::uninitialized` when `get_property_data` is called. Thus,
+    // `CFRelease()` will randomly free a memory when `get_property_data` fails.
+
+    // TODO: Use `get_property_data::<StringRef>(...)` after replacing
+    //       `uninitialized` by `Default` in `get_property_data`.
+    let name_ref =
+        audio_object::get_property_data::<CFStringRef>(id, &DEVICE_NAME_PROPERTY_ADDRESS)?;
+    let name = StringRef::new(name_ref);
     name.into_string().map_err(Error::ConversionFailed)
 }
 
@@ -243,8 +253,9 @@ pub fn get_device_source_name(id: AudioObjectID, scope: &Scope) -> Result<String
     } else {
         &OUTPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS
     };
-    // Trick: The trick to use the `StringRef` instance is same as
-    // `get_device_name`.
+    // Compared with `get_device_name`, it's ok to use `StringRef` instead of
+    // `CFStringRef` here since we won't randomly free a memory here. `name`
+    // is set to a null pointer by default, so it's safe!
     audio_object::get_property_data_with_ptr(id, address, &mut translation)?;
     name.into_string().map_err(Error::ConversionFailed)
 }
