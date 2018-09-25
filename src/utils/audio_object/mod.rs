@@ -19,7 +19,7 @@
 extern crate coreaudio_sys as sys;
 
 use std::fmt; // For fmt::{Debug, Formatter, Result}
-use std::mem; // For mem::{uninitialized(), size_of()}
+use std::mem; // For mem::size_of_val()
 use std::os::raw::c_void;
 use std::ptr; // For ptr::null()
 
@@ -73,7 +73,7 @@ impl AudioObject {
     pub fn is_valid(&self) -> bool {
         self.0 != sys::kAudioObjectUnknown
     }
-    pub fn get_property_data<T>(
+    pub fn get_property_data<T: Default>(
         &self,
         address: &sys::AudioObjectPropertyAddress,
     ) -> Result<T, Error> {
@@ -95,14 +95,20 @@ impl Into<sys::AudioObjectID> for AudioObject {
     }
 }
 
-pub fn get_property_data<T>(
+impl Default for AudioObject {
+    fn default() -> Self {
+        AudioObject::new(sys::kAudioObjectUnknown)
+    }
+}
+
+pub fn get_property_data<T: Default>(
     id: sys::AudioObjectID,
     address: &sys::AudioObjectPropertyAddress,
 ) -> Result<T, Error> {
     // assert!(id != sys::kAudioObjectUnknown, "Bad AudioObjectID!");
-    // Use `mem::uninitialized()` to bypasses memory-initialization checks.
-    // TODO: Replace `mem::uninitialized()` by `Default::default()`.
-    let mut data: T = unsafe { mem::uninitialized() };
+    // When this function fails(returns Err), the `data` will be dropped and
+    // T::drop() will be fired.
+    let mut data: T = Default::default();
     get_property_data_with_ptr(id, address, &mut data)?;
     Ok(data)
 }
@@ -113,7 +119,7 @@ pub fn get_property_data_with_ptr<T>(
     data: &mut T,
 ) -> Result<(), Error> {
     // assert!(id != sys::kAudioObjectUnknown, "Bad AudioObjectID!");
-    let mut size = mem::size_of::<T>();
+    let mut size = mem::size_of_val(data);
     debug_assert_eq!(size, get_property_data_size(id, address)?);
     let status = audio_object_get_property_data::<T>(id, address, &mut size, data);
     convert_to_result(status)

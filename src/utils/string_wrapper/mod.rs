@@ -77,6 +77,12 @@ impl Drop for StringRef {
     }
 }
 
+impl Default for StringRef {
+    fn default() -> Self {
+        StringRef::new(ptr::null())
+    }
+}
+
 // Private utils
 // ============================================================================
 fn get_btye_array(string_ref: CFStringRef) -> Result<Vec<u8>, Error> {
