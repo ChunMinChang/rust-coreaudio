@@ -70,8 +70,8 @@ impl AudioObject {
     pub fn new(id: sys::AudioObjectID) -> Self {
         AudioObject(id)
     }
-    pub fn is_unknown(&self) -> bool {
-        self.0 == sys::kAudioObjectUnknown
+    pub fn is_valid(&self) -> bool {
+        self.0 != sys::kAudioObjectUnknown
     }
     pub fn get_property_data<T>(
         &self,

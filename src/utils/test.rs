@@ -9,11 +9,11 @@ use super::*;
 fn test_get_default_device() {
     // If we have default input/output devices, then they must be valid ids.
     if let Ok(device) = get_default_device(&Scope::Input) {
-        assert!(!device.is_unknown());
+        assert!(device.is_valid());
     }
 
     if let Ok(device) = get_default_device(&Scope::Output) {
-        assert!(!device.is_unknown());
+        assert!(device.is_valid());
     }
 }
 
@@ -35,12 +35,12 @@ fn test_in_scope_with_invalid_id() {
 #[test]
 fn test_in_scope() {
     if let Ok(device) = get_default_device(&Scope::Input) {
-        assert!(!device.is_unknown());
+        assert!(device.is_valid());
         assert!(in_scope(device.into(), &Scope::Input).unwrap());
     }
 
     if let Ok(device) = get_default_device(&Scope::Output) {
-        assert!(!device.is_unknown());
+        assert!(device.is_valid());
         assert!(in_scope(device.into(), &Scope::Output).unwrap());
     }
 }
@@ -87,7 +87,7 @@ fn test_get_device_label_with_invalid_id() {
 #[test]
 fn test_get_device_label_with_invalid_scope() {
     if let Ok(device) = get_default_device(&Scope::Input) {
-        assert!(!device.is_unknown());
+        assert!(device.is_valid());
         let id = device.into();
         let is_output = in_scope(id, &Scope::Output).unwrap();
         if !is_output {
@@ -99,7 +99,7 @@ fn test_get_device_label_with_invalid_scope() {
     }
 
     if let Ok(device) = get_default_device(&Scope::Output) {
-        assert!(!device.is_unknown());
+        assert!(device.is_valid());
         let id = device.into();
         let is_input = in_scope(id, &Scope::Input).unwrap();
         if !is_input {
@@ -114,12 +114,12 @@ fn test_get_device_label_with_invalid_scope() {
 #[test]
 fn test_get_device_label() {
     if let Ok(device) = get_default_device(&Scope::Input) {
-        assert!(!device.is_unknown());
+        assert!(device.is_valid());
         assert!(!get_device_label(device.into(), &Scope::Input).unwrap().is_empty());
     }
 
     if let Ok(device) = get_default_device(&Scope::Output) {
-        assert!(!device.is_unknown());
+        assert!(device.is_valid());
         assert!(!get_device_label(device.into(), &Scope::Output).unwrap().is_empty());
     }
 }
@@ -139,12 +139,12 @@ fn test_get_device_name_with_invalid_id() {
 fn test_get_device_name() {
     // If we have default input/output devices, then they must have non-empty names.
     if let Ok(device) = get_default_device(&Scope::Input) {
-        assert!(!device.is_unknown());
+        assert!(device.is_valid());
         assert!(!get_device_name(device.into()).unwrap().is_empty());
     }
 
     if let Ok(device) = get_default_device(&Scope::Output) {
-        assert!(!device.is_unknown());
+        assert!(device.is_valid());
         assert!(!get_device_name(device.into()).unwrap().is_empty());
     }
 }
@@ -167,7 +167,7 @@ fn test_get_device_source_name_with_invalid_id() {
 #[test]
 fn test_get_device_source_name_with_invalid_scope() {
     if let Ok(device) = get_default_device(&Scope::Input) {
-        assert!(!device.is_unknown());
+        assert!(device.is_valid());
         let id = device.into();
         let is_output = in_scope(id, &Scope::Output).unwrap();
         if !is_output {
@@ -179,7 +179,7 @@ fn test_get_device_source_name_with_invalid_scope() {
     }
 
     if let Ok(device) = get_default_device(&Scope::Output) {
-        assert!(!device.is_unknown());
+        assert!(device.is_valid());
         let id = device.into();
         let is_input = in_scope(id, &Scope::Input).unwrap();
         if !is_input {
@@ -196,7 +196,7 @@ fn test_get_device_source_name() {
     // Even we have default input/output devices, we may not get the source
     // names of the devices.
     if let Ok(device) = get_default_device(&Scope::Input) {
-        assert!(!device.is_unknown());
+        assert!(device.is_valid());
         match get_device_source_name(device.into(), &Scope::Input) {
             Ok(name) => {
                 assert!(!name.is_empty());
@@ -211,7 +211,7 @@ fn test_get_device_source_name() {
     }
 
     if let Ok(device) = get_default_device(&Scope::Output) {
-        assert!(!device.is_unknown());
+        assert!(device.is_valid());
         match get_device_source_name(device.into(), &Scope::Output) {
             Ok(name) => {
                 assert!(!name.is_empty());
@@ -261,7 +261,7 @@ fn test_set_default_device_with_invalid_id() {
 #[test]
 fn test_set_default_device_with_same_device() {
     if let Ok(device) = get_default_device(&Scope::Input) {
-        assert!(!device.is_unknown());
+        assert!(device.is_valid());
         assert_eq!(
             set_default_device(device.into(), &Scope::Input).unwrap_err(),
             Error::SetSameDevice
@@ -269,7 +269,7 @@ fn test_set_default_device_with_same_device() {
     }
 
     if let Ok(device) = get_default_device(&Scope::Output) {
-        assert!(!device.is_unknown());
+        assert!(device.is_valid());
         assert_eq!(
             set_default_device(device.into(), &Scope::Output).unwrap_err(),
             Error::SetSameDevice
@@ -280,7 +280,7 @@ fn test_set_default_device_with_same_device() {
 #[test]
 fn test_set_default_device_with_invalid_scope() {
     if let Ok(device) = get_default_device(&Scope::Input) {
-        assert!(!device.is_unknown());
+        assert!(device.is_valid());
         let id = device.into();
         let is_output = in_scope(id, &Scope::Output).unwrap();
         if !is_output {
@@ -292,7 +292,7 @@ fn test_set_default_device_with_invalid_scope() {
     }
 
     if let Ok(device) = get_default_device(&Scope::Output) {
-        assert!(!device.is_unknown());
+        assert!(device.is_valid());
         let id = device.into();
         let is_input = in_scope(id, &Scope::Input).unwrap();
         if !is_input {
@@ -346,7 +346,7 @@ fn test_get_device_source_with_invalid_id() {
 #[test]
 fn test_get_device_source_with_invalid_scope() {
     if let Ok(device) = get_default_device(&Scope::Input) {
-        assert!(!device.is_unknown());
+        assert!(device.is_valid());
         let id = device.into();
         let is_output = in_scope(id, &Scope::Output).unwrap();
         if !is_output {
@@ -358,7 +358,7 @@ fn test_get_device_source_with_invalid_scope() {
     }
 
     if let Ok(device) = get_default_device(&Scope::Output) {
-        assert!(!device.is_unknown());
+        assert!(device.is_valid());
         let id = device.into();
         let is_input = in_scope(id, &Scope::Input).unwrap();
         if !is_input {
@@ -374,14 +374,14 @@ fn test_get_device_source_with_invalid_scope() {
 fn test_get_device_source() {
     // If we can get source from input/output devices, then they must be non-zero values.
     if let Ok(device) = get_default_device(&Scope::Input) {
-        assert!(!device.is_unknown());
+        assert!(device.is_valid());
         if let Ok(source) = get_device_source(device.into(), &Scope::Input) {
             assert_ne!(source, 0);
         }
     }
 
     if let Ok(device) = get_default_device(&Scope::Output) {
-        assert!(!device.is_unknown());
+        assert!(device.is_valid());
         if let Ok(source) = get_device_source(device.into(), &Scope::Output) {
             assert_ne!(source, 0);
         }

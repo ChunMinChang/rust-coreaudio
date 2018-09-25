@@ -166,10 +166,10 @@ impl AudioSystemObject {
         };
         let device = self.0.get_property_data::<audio_object::AudioObject>(address)?;
         // We will get an unknow device when there is no available device at this time
-        if device.is_unknown() {
-            Err(Error::NoDeviceFound)
-        } else {
+        if device.is_valid() {
             Ok(device)
+        } else {
+            Err(Error::NoDeviceFound)
         }
     }
 }
