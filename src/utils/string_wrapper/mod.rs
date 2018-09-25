@@ -41,6 +41,8 @@ impl fmt::Debug for Error {
     }
 }
 
+// Public APIs
+// ============================================================================
 // A wrapper for CFStringRef.
 // size_of::<StringRef>() == size_of::<CFStringRef>() since this struct
 // contains only one element.
@@ -75,6 +77,8 @@ impl Drop for StringRef {
     }
 }
 
+// Private utils
+// ============================================================================
 fn get_btye_array(string_ref: CFStringRef) -> Result<Vec<u8>, Error> {
     // First, get the size of the buffer ought to be.
     let length: CFIndex = unsafe { CFStringGetLength(string_ref) };
@@ -134,5 +138,7 @@ fn btye_array_to_string(buffer: Vec<u8>) -> Result<String, Error> {
     String::from_utf8(buffer).map_err(|e| Error::Utf8(e.utf8_error()))
 }
 
+// Tests
+// ============================================================================
 #[cfg(test)]
 mod test;

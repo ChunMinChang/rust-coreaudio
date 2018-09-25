@@ -146,7 +146,7 @@ impl fmt::Debug for Error {
 }
 
 // Public APIs
-// ========================================================================
+// ============================================================================
 pub fn get_default_device_id(scope: &Scope) -> Result<AudioObjectID, Error> {
     let address: &AudioObjectPropertyAddress = if scope == &Scope::Input {
         &DEFAULT_INPUT_DEVICE_PROPERTY_ADDRESS
@@ -257,7 +257,7 @@ pub fn set_default_device(id: AudioObjectID, scope: &Scope) -> Result<(), Error>
 }
 
 // Private APIs
-// ========================================================================
+// ============================================================================
 fn get_device_source(id: AudioObjectID, scope: &Scope) -> Result<u32, Error> {
     if !in_scope(id, scope)? {
         return Err(Error::WrongScope);
@@ -282,5 +282,7 @@ fn number_of_streams(id: AudioObjectID, scope: &Scope) -> Result<usize, Error> {
     Ok(size / mem::size_of::<AudioStreamID>())
 }
 
+// Tests
+// ============================================================================
 #[cfg(test)]
 mod test;

@@ -57,6 +57,8 @@ impl fmt::Debug for Error {
     }
 }
 
+// Public APIs
+// ============================================================================
 pub fn get_property_data<T>(
     id: sys::AudioObjectID,
     address: &sys::AudioObjectPropertyAddress,
@@ -121,6 +123,8 @@ pub fn set_property_data<T>(
     convert_to_result(status)
 }
 
+// Private APIs
+// ============================================================================
 fn non_empty_size(result: Result<usize, Error>) -> Result<usize, Error> {
     let value = result?;
     if value > 0 {
@@ -137,6 +141,8 @@ fn convert_to_result(status: sys::OSStatus) -> Result<(), Error> {
     }
 }
 
+// Wrappers for native platform APIs
+// ============================================================================
 fn audio_object_get_property_data<T>(
     id: sys::AudioObjectID,
     address: &sys::AudioObjectPropertyAddress,
@@ -189,5 +195,7 @@ fn audio_object_set_property_data<T>(
     }
 }
 
+// Tests
+// ============================================================================
 #[cfg(test)]
 mod test;

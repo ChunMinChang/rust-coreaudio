@@ -42,6 +42,8 @@ pub enum Element {
     Input  = 1,
 }
 
+// Public APIs
+// ============================================================================
 pub struct AudioUnit(sys::AudioUnit);
 
 impl AudioUnit {
@@ -135,6 +137,8 @@ fn stop_unit(unit: sys::AudioUnit) -> Result<(), Error> {
     convert_to_result(status)
 }
 
+// Private APIs
+// ============================================================================
 fn get_property_info(
     unit: sys::AudioUnit,
     id: sys::AudioUnitPropertyID,
@@ -220,6 +224,8 @@ fn convert_to_result(status: sys::OSStatus) -> Result<(), Error> {
     }
 }
 
+// Wrappers for native platform APIs
+// ============================================================================
 fn audio_unit_get_property_info(
     unit: sys::AudioUnit,
     id: sys::AudioUnitPropertyID,
@@ -294,5 +300,7 @@ fn audio_component_instance_new(
     unsafe { sys::AudioComponentInstanceNew(component, instance) }
 }
 
+// Tests
+// ============================================================================
 #[cfg(test)]
 mod test;
