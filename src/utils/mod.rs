@@ -179,7 +179,8 @@ pub fn get_default_device(scope: &Scope) -> Result<audio_object::AudioObject, Er
     system_device.get_default_device(scope)
 }
 
-// TODO: Replace all the following AudioObjectID by AudioObject!
+// TODO: 1. Replace all the following AudioObjectID by AudioObject!
+//       2. Check AudioObject.is_valid() at first when API is called!
 
 pub fn in_scope(id: AudioObjectID, scope: &Scope) -> Result<bool, Error> {
     let streams = number_of_streams(id, scope)?;
