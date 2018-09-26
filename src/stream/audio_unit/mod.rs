@@ -99,8 +99,8 @@ impl AudioUnit {
 
 impl Drop for AudioUnit {
     fn drop(&mut self) {
-        self.stop();
-        self.uninitialize();
+        assert!(self.stop().is_ok());
+        assert!(self.uninitialize().is_ok());
     }
 }
 

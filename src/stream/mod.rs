@@ -204,8 +204,8 @@ impl<T> Stream<T> {
 
 impl<T> Drop for Stream<T> {
     fn drop(&mut self) {
-        self.stop();
-        self.uninit_unit();
+        assert!(self.stop().is_ok());
+        assert!(self.uninit_unit().is_ok());
     }
 }
 
