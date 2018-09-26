@@ -29,6 +29,7 @@ use std::mem; // For mem::{uninitialized(), size_of()}
 use std::os::raw::c_void;
 use std::ptr; // For ptr::null()
 
+// TODO: Move this const values to a shared module.
 const DEVICE_NAME_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
     AudioObjectPropertyAddress {
         mSelector: kAudioObjectPropertyName,
@@ -144,6 +145,8 @@ impl fmt::Debug for Error {
         write!(f, "{}", printable)
     }
 }
+
+// TODO: Move `AudioSystemObject`, `AudioObject` to independent module.
 
 // AudioSystemObject
 // ============================================================================
