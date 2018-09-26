@@ -24,7 +24,7 @@ use std::os::raw::c_void;
 use std::ptr; // For ptr::null()
 
 // Using PartialEq for comparison.
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum Error {
     BadObject,
     BadPropertySize,
@@ -48,17 +48,17 @@ impl From<sys::OSStatus> for Error {
     }
 }
 
-impl fmt::Debug for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let printable = match self {
-            Error::BadObject => "BadObject: The AudioObjectID passed to the function doesn't map to a valid AudioObject.",
-            Error::BadPropertySize => "BadPropertySize: An improperly sized buffer was provided when accessing the data of a property.",
-            Error::UnknownProperty => "UnknownProperty: The AudioObject doesn't know about the property at the given address.",
-            Error::SizeIsZero => "SizeIsZero: The size of data mapping to the given id and address is zero.",
-        };
-        write!(f, "{}", printable)
-    }
-}
+// impl fmt::Debug for Error {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         let printable = match self {
+//             Error::BadObject => "BadObject: The AudioObjectID passed to the function doesn't map to a valid AudioObject.",
+//             Error::BadPropertySize => "BadPropertySize: An improperly sized buffer was provided when accessing the data of a property.",
+//             Error::UnknownProperty => "UnknownProperty: The AudioObject doesn't know about the property at the given address.",
+//             Error::SizeIsZero => "SizeIsZero: The size of data mapping to the given id and address is zero.",
+//         };
+//         write!(f, "{}", printable)
+//     }
+// }
 
 // Public APIs
 // ============================================================================
