@@ -109,7 +109,7 @@ pub enum Scope {
 }
 
 // Using PartialEq for comparison.
-#[derive(Debug, PartialEq)]
+#[derive(PartialEq)]
 pub enum Error {
     ConversionFailed(string_wrapper::Error),
     InvalidParameters(audio_object_utils::Error),
@@ -132,18 +132,18 @@ impl From<string_wrapper::Error> for Error {
     }
 }
 
-// impl fmt::Debug for Error {
-//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//         let printable = match self {
-//             Error::ConversionFailed(e) => format!("Fail to convert string: {:?}", e),
-//             Error::InvalidParameters(e) => format!("Invalid parameters: {:?}", e),
-//             Error::NoDeviceFound => "No valid device found by given information.".to_string(),
-//             Error::SetSameDevice => "Try setting the device with the same one".to_string(),
-//             Error::WrongScope => "The given scope is wrong.".to_string(),
-//         };
-//         write!(f, "{}", printable)
-//     }
-// }
+impl fmt::Debug for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let printable = match self {
+            Error::ConversionFailed(e) => format!("Fail to convert string: {:?}", e),
+            Error::InvalidParameters(e) => format!("Invalid parameters: {:?}", e),
+            Error::NoDeviceFound => "No valid device found by given information.".to_string(),
+            Error::SetSameDevice => "Try setting the device with the same one".to_string(),
+            Error::WrongScope => "The given scope is wrong.".to_string(),
+        };
+        write!(f, "{}", printable)
+    }
+}
 
 // AudioSystemObject
 // ============================================================================
