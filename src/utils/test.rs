@@ -17,226 +17,42 @@ fn test_get_default_device() {
     }
 }
 
-// in_scope
-// ------------------------------------
-#[test]
-// #[should_panic(expected = "Bad")]
-fn test_in_scope_with_invalid_id() {
-    assert_eq!(
-        in_scope(kAudioObjectUnknown, &Scope::Input).unwrap_err(),
-        Error::InvalidParameters(audio_object::Error::BadObject)
-    );
-    assert_eq!(
-        in_scope(kAudioObjectUnknown, &Scope::Output).unwrap_err(),
-        Error::InvalidParameters(audio_object::Error::BadObject)
-    );
-}
-
-#[test]
-fn test_in_scope() {
-    if let Ok(device) = get_default_device(&Scope::Input) {
-        assert!(device.is_valid());
-        assert!(in_scope(device.into(), &Scope::Input).unwrap());
-    }
-
-    if let Ok(device) = get_default_device(&Scope::Output) {
-        assert!(device.is_valid());
-        assert!(in_scope(device.into(), &Scope::Output).unwrap());
-    }
-}
-
 // get_device_ids
 // ------------------------------------
 #[test]
-fn test_get_device_ids() {
+fn test_get_devices() {
     if get_default_device(&Scope::Input).is_ok() {
-        assert!(!get_device_ids(&Scope::Input).unwrap().is_empty());
+        assert!(!get_devices(&Scope::Input).unwrap().is_empty());
     }
 
     if get_default_device(&Scope::Output).is_ok() {
-        assert!(!get_device_ids(&Scope::Output).unwrap().is_empty());
+        assert!(!get_devices(&Scope::Output).unwrap().is_empty());
     }
 }
 
 // get_all_device_ids
 // ------------------------------------
 #[test]
-fn test_get_all_device_ids() {
+fn test_get_all_devices() {
     if get_default_device(&Scope::Input).is_ok() ||
-       get_default_device(&Scope::Output).is_ok()
-    {
-        assert!(!get_all_device_ids().unwrap().is_empty());
+       get_default_device(&Scope::Output).is_ok() {
+        assert!(!get_all_devices().unwrap().is_empty());
     }
 }
 
-// get_device_label
-// ------------------------------------
-#[test]
-// #[should_panic(expected = "Bad")]
-fn test_get_device_label_with_invalid_id() {
-    assert_eq!(
-        get_device_label(kAudioObjectUnknown, &Scope::Input).unwrap_err(),
-        Error::InvalidParameters(audio_object::Error::BadObject)
-    );
-    assert_eq!(
-        get_device_label(kAudioObjectUnknown, &Scope::Output).unwrap_err(),
-        Error::InvalidParameters(audio_object::Error::BadObject)
-    );
-}
-
-#[test]
-fn test_get_device_label_with_invalid_scope() {
-    if let Ok(device) = get_default_device(&Scope::Input) {
-        assert!(device.is_valid());
-        let id = device.into();
-        let is_output = in_scope(id, &Scope::Output).unwrap();
-        if !is_output {
-            assert_eq!(
-                get_device_label(id, &Scope::Output).unwrap_err(),
-                Error::WrongScope
-            );
-        }
-    }
-
-    if let Ok(device) = get_default_device(&Scope::Output) {
-        assert!(device.is_valid());
-        let id = device.into();
-        let is_input = in_scope(id, &Scope::Input).unwrap();
-        if !is_input {
-            assert_eq!(
-                get_device_label(id, &Scope::Input).unwrap_err(),
-                Error::WrongScope
-            );
-        }
-    }
-}
-
-#[test]
-fn test_get_device_label() {
-    if let Ok(device) = get_default_device(&Scope::Input) {
-        assert!(device.is_valid());
-        assert!(!get_device_label(device.into(), &Scope::Input).unwrap().is_empty());
-    }
-
-    if let Ok(device) = get_default_device(&Scope::Output) {
-        assert!(device.is_valid());
-        assert!(!get_device_label(device.into(), &Scope::Output).unwrap().is_empty());
-    }
-}
-
-// get_device_name
-// ------------------------------------
-#[test]
-// #[should_panic(expected = "Bad")]
-fn test_get_device_name_with_invalid_id() {
-    assert_eq!(
-        get_device_name(kAudioObjectUnknown).unwrap_err(),
-        Error::InvalidParameters(audio_object::Error::BadObject)
-    );
-}
-
-#[test]
-fn test_get_device_name() {
-    // If we have default input/output devices, then they must have non-empty names.
-    if let Ok(device) = get_default_device(&Scope::Input) {
-        assert!(device.is_valid());
-        assert!(!get_device_name(device.into()).unwrap().is_empty());
-    }
-
-    if let Ok(device) = get_default_device(&Scope::Output) {
-        assert!(device.is_valid());
-        assert!(!get_device_name(device.into()).unwrap().is_empty());
-    }
-}
-
-// get_device_source_name
-// ------------------------------------
-#[test]
-// #[should_panic(expected = "Bad")]
-fn test_get_device_source_name_with_invalid_id() {
-    assert_eq!(
-        get_device_source_name(kAudioObjectUnknown, &Scope::Input,).unwrap_err(),
-        Error::InvalidParameters(audio_object::Error::BadObject)
-    );
-    assert_eq!(
-        get_device_source_name(kAudioObjectUnknown, &Scope::Output,).unwrap_err(),
-        Error::InvalidParameters(audio_object::Error::BadObject)
-    );
-}
-
-#[test]
-fn test_get_device_source_name_with_invalid_scope() {
-    if let Ok(device) = get_default_device(&Scope::Input) {
-        assert!(device.is_valid());
-        let id = device.into();
-        let is_output = in_scope(id, &Scope::Output).unwrap();
-        if !is_output {
-            assert_eq!(
-                get_device_source_name(id, &Scope::Output,).unwrap_err(),
-                Error::WrongScope
-            );
-        }
-    }
-
-    if let Ok(device) = get_default_device(&Scope::Output) {
-        assert!(device.is_valid());
-        let id = device.into();
-        let is_input = in_scope(id, &Scope::Input).unwrap();
-        if !is_input {
-            assert_eq!(
-                get_device_source_name(id, &Scope::Input,).unwrap_err(),
-                Error::WrongScope
-            );
-        }
-    }
-}
-
-#[test]
-fn test_get_device_source_name() {
-    // Even we have default input/output devices, we may not get the source
-    // names of the devices.
-    if let Ok(device) = get_default_device(&Scope::Input) {
-        assert!(device.is_valid());
-        match get_device_source_name(device.into(), &Scope::Input) {
-            Ok(name) => {
-                assert!(!name.is_empty());
-            }
-            Err(e) => {
-                assert_eq!(
-                    e,
-                    Error::InvalidParameters(audio_object::Error::UnknownProperty)
-                );
-            }
-        }
-    }
-
-    if let Ok(device) = get_default_device(&Scope::Output) {
-        assert!(device.is_valid());
-        match get_device_source_name(device.into(), &Scope::Output) {
-            Ok(name) => {
-                assert!(!name.is_empty());
-            }
-            Err(e) => {
-                assert_eq!(
-                    e,
-                    Error::InvalidParameters(audio_object::Error::UnknownProperty)
-                );
-            }
-        }
-    }
-}
 
 // set_default_device
 // ------------------------------------
 #[test]
 // #[should_panic(expected = "Bad")]
 fn test_set_default_device_with_invalid_id() {
+    let unknown_device = AudioObject::new(kAudioObjectUnknown);
     assert_eq!(
-        set_default_device(kAudioObjectUnknown, &Scope::Input).unwrap_err(),
+        set_default_device(&unknown_device, &Scope::Input).unwrap_err(),
         Error::InvalidParameters(audio_object::Error::BadObject)
     );
     assert_eq!(
-        set_default_device(kAudioObjectUnknown, &Scope::Output).unwrap_err(),
+        set_default_device(&unknown_device, &Scope::Output).unwrap_err(),
         Error::InvalidParameters(audio_object::Error::BadObject)
     );
 }
@@ -263,7 +79,7 @@ fn test_set_default_device_with_same_device() {
     if let Ok(device) = get_default_device(&Scope::Input) {
         assert!(device.is_valid());
         assert_eq!(
-            set_default_device(device.into(), &Scope::Input).unwrap_err(),
+            set_default_device(&device, &Scope::Input).unwrap_err(),
             Error::SetSameDevice
         );
     }
@@ -271,7 +87,7 @@ fn test_set_default_device_with_same_device() {
     if let Ok(device) = get_default_device(&Scope::Output) {
         assert!(device.is_valid());
         assert_eq!(
-            set_default_device(device.into(), &Scope::Output).unwrap_err(),
+            set_default_device(&device, &Scope::Output).unwrap_err(),
             Error::SetSameDevice
         );
     }
@@ -281,11 +97,10 @@ fn test_set_default_device_with_same_device() {
 fn test_set_default_device_with_invalid_scope() {
     if let Ok(device) = get_default_device(&Scope::Input) {
         assert!(device.is_valid());
-        let id = device.into();
-        let is_output = in_scope(id, &Scope::Output).unwrap();
+        let is_output = device.in_scope(&Scope::Output).unwrap();
         if !is_output {
             assert_eq!(
-                set_default_device(id, &Scope::Output).unwrap_err(),
+                set_default_device(&device, &Scope::Output).unwrap_err(),
                 Error::WrongScope
             );
         }
@@ -293,11 +108,10 @@ fn test_set_default_device_with_invalid_scope() {
 
     if let Ok(device) = get_default_device(&Scope::Output) {
         assert!(device.is_valid());
-        let id = device.into();
-        let is_input = in_scope(id, &Scope::Input).unwrap();
+        let is_input = device.in_scope(&Scope::Input).unwrap();
         if !is_input {
             assert_eq!(
-                set_default_device(id, &Scope::Input).unwrap_err(),
+                set_default_device(&device, &Scope::Input).unwrap_err(),
                 Error::WrongScope
             );
         }
@@ -305,7 +119,7 @@ fn test_set_default_device_with_invalid_scope() {
 }
 
 fn test_change_default_device(scope: &Scope) {
-    let devices = get_device_ids(scope).unwrap_or(vec![]);
+    let devices = get_devices(scope).unwrap_or_default();
     if devices.len() < 2 {
         return;
     }
@@ -313,9 +127,9 @@ fn test_change_default_device(scope: &Scope) {
     let current_device = get_default_device(scope).unwrap();
     let new_device = devices
         .into_iter()
-        .find(|&device| device != current_device.clone().into()) // TODO: ugly!
+        .find(|ref device| device != &&current_device)
         .unwrap();
-    assert!(set_default_device(new_device, scope).is_ok());
+    assert!(set_default_device(&new_device, scope).is_ok());
 }
 
 #[test]
@@ -325,20 +139,206 @@ fn test_set_default_device() {
     test_change_default_device(&Scope::Output);
 }
 
-// Tests for Private Functions
-// ============================================================================
+
+// AudioObject
+// ------------------------------------
+// get_device_label
+// ------------------------------------
+#[test]
+// #[should_panic(expected = "Bad")]
+fn test_get_device_label_with_invalid_id() {
+    let unknown_device = AudioObject::new(kAudioObjectUnknown);
+    assert_eq!(
+        unknown_device.get_device_label(&Scope::Input).unwrap_err(),
+        Error::InvalidParameters(audio_object::Error::BadObject)
+    );
+    assert_eq!(
+        unknown_device.get_device_label(&Scope::Output).unwrap_err(),
+        Error::InvalidParameters(audio_object::Error::BadObject)
+    );
+}
+
+#[test]
+fn test_get_device_label_with_invalid_scope() {
+    if let Ok(device) = get_default_device(&Scope::Input) {
+        assert!(device.is_valid());
+        let is_output = device.in_scope(&Scope::Output).unwrap();
+        if !is_output {
+            assert_eq!(
+                device.get_device_label(&Scope::Output).unwrap_err(),
+                Error::WrongScope
+            );
+        }
+    }
+
+    if let Ok(device) = get_default_device(&Scope::Output) {
+        assert!(device.is_valid());
+        let is_input = device.in_scope(&Scope::Input).unwrap();
+        if !is_input {
+            assert_eq!(
+                device.get_device_label(&Scope::Input).unwrap_err(),
+                Error::WrongScope
+            );
+        }
+    }
+}
+
+#[test]
+fn test_get_device_label() {
+    if let Ok(device) = get_default_device(&Scope::Input) {
+        assert!(device.is_valid());
+        assert!(!device.get_device_label(&Scope::Input).unwrap().is_empty());
+    }
+
+    if let Ok(device) = get_default_device(&Scope::Output) {
+        assert!(device.is_valid());
+        assert!(!device.get_device_label(&Scope::Output).unwrap().is_empty());
+    }
+}
+
+// get_device_name
+// ------------------------------------
+#[test]
+// #[should_panic(expected = "Bad")]
+fn test_get_device_name_with_invalid_id() {
+    let unknown_device = AudioObject::new(kAudioObjectUnknown);
+    assert_eq!(
+        unknown_device.get_device_name().unwrap_err(),
+        Error::InvalidParameters(audio_object::Error::BadObject)
+    );
+}
+
+#[test]
+fn test_get_device_name() {
+    // If we have default input/output devices, then they must have non-empty names.
+    if let Ok(device) = get_default_device(&Scope::Input) {
+        assert!(device.is_valid());
+        assert!(!device.get_device_name().unwrap().is_empty());
+    }
+
+    if let Ok(device) = get_default_device(&Scope::Output) {
+        assert!(device.is_valid());
+        assert!(!device.get_device_name().unwrap().is_empty());
+    }
+}
+
+// get_device_source_name
+// ------------------------------------
+#[test]
+// #[should_panic(expected = "Bad")]
+fn test_get_device_source_name_with_invalid_id() {
+    let unknown_device = AudioObject::new(kAudioObjectUnknown);
+    assert_eq!(
+        unknown_device.get_device_source_name(&Scope::Input,).unwrap_err(),
+        Error::InvalidParameters(audio_object::Error::BadObject)
+    );
+    assert_eq!(
+        unknown_device.get_device_source_name(&Scope::Output,).unwrap_err(),
+        Error::InvalidParameters(audio_object::Error::BadObject)
+    );
+}
+
+#[test]
+fn test_get_device_source_name_with_invalid_scope() {
+    if let Ok(device) = get_default_device(&Scope::Input) {
+        assert!(device.is_valid());
+        let is_output = device.in_scope(&Scope::Output).unwrap();
+        if !is_output {
+            assert_eq!(
+                device.get_device_source_name(&Scope::Output,).unwrap_err(),
+                Error::WrongScope
+            );
+        }
+    }
+
+    if let Ok(device) = get_default_device(&Scope::Output) {
+        assert!(device.is_valid());
+        let is_input = device.in_scope(&Scope::Input).unwrap();
+        if !is_input {
+            assert_eq!(
+                device.get_device_source_name(&Scope::Input,).unwrap_err(),
+                Error::WrongScope
+            );
+        }
+    }
+}
+
+#[test]
+fn test_get_device_source_name() {
+    // Even we have default input/output devices, we may not get the source
+    // names of the devices.
+    if let Ok(device) = get_default_device(&Scope::Input) {
+        assert!(device.is_valid());
+        match device.get_device_source_name(&Scope::Input) {
+            Ok(name) => {
+                assert!(!name.is_empty());
+            }
+            Err(e) => {
+                assert_eq!(
+                    e,
+                    Error::InvalidParameters(audio_object::Error::UnknownProperty)
+                );
+            }
+        }
+    }
+
+    if let Ok(device) = get_default_device(&Scope::Output) {
+        assert!(device.is_valid());
+        match device.get_device_source_name(&Scope::Output) {
+            Ok(name) => {
+                assert!(!name.is_empty());
+            }
+            Err(e) => {
+                assert_eq!(
+                    e,
+                    Error::InvalidParameters(audio_object::Error::UnknownProperty)
+                );
+            }
+        }
+    }
+}
+
+// in_scope
+// --------------------------
+#[test]
+// #[should_panic(expected = "Bad")]
+fn test_in_scope_with_invalid_id() {
+    let unknown_device = AudioObject::new(kAudioObjectUnknown);
+    assert_eq!(
+        unknown_device.in_scope(&Scope::Input).unwrap_err(),
+        Error::InvalidParameters(audio_object::Error::BadObject)
+    );
+    assert_eq!(
+        unknown_device.in_scope(&Scope::Output).unwrap_err(),
+        Error::InvalidParameters(audio_object::Error::BadObject)
+    );
+}
+
+#[test]
+fn test_in_scope() {
+    if let Ok(device) = get_default_device(&Scope::Input) {
+        assert!(device.is_valid());
+        assert!(device.in_scope(&Scope::Input).unwrap());
+    }
+
+    if let Ok(device) = get_default_device(&Scope::Output) {
+        assert!(device.is_valid());
+        assert!(device.in_scope(&Scope::Output).unwrap());
+    }
+}
 
 // get_device_source
 // ------------------------------------
 #[test]
 // #[should_panic(expected = "Bad")]
 fn test_get_device_source_with_invalid_id() {
+    let unknown_device = AudioObject::new(kAudioObjectUnknown);
     assert_eq!(
-        get_device_source(kAudioObjectUnknown, &Scope::Input,).unwrap_err(),
+        unknown_device.get_device_source(&Scope::Input,).unwrap_err(),
         Error::InvalidParameters(audio_object::Error::BadObject)
     );
     assert_eq!(
-        get_device_source(kAudioObjectUnknown, &Scope::Input,).unwrap_err(),
+        unknown_device.get_device_source(&Scope::Input,).unwrap_err(),
         Error::InvalidParameters(audio_object::Error::BadObject)
     );
 }
@@ -347,11 +347,10 @@ fn test_get_device_source_with_invalid_id() {
 fn test_get_device_source_with_invalid_scope() {
     if let Ok(device) = get_default_device(&Scope::Input) {
         assert!(device.is_valid());
-        let id = device.into();
-        let is_output = in_scope(id, &Scope::Output).unwrap();
+        let is_output = device.in_scope(&Scope::Output).unwrap();
         if !is_output {
             assert_eq!(
-                get_device_source(id, &Scope::Output).unwrap_err(),
+                device.get_device_source(&Scope::Output).unwrap_err(),
                 Error::WrongScope
             );
         }
@@ -359,11 +358,10 @@ fn test_get_device_source_with_invalid_scope() {
 
     if let Ok(device) = get_default_device(&Scope::Output) {
         assert!(device.is_valid());
-        let id = device.into();
-        let is_input = in_scope(id, &Scope::Input).unwrap();
+        let is_input = device.in_scope(&Scope::Input).unwrap();
         if !is_input {
             assert_eq!(
-                get_device_source(id, &Scope::Input).unwrap_err(),
+                device.get_device_source(&Scope::Input).unwrap_err(),
                 Error::WrongScope
             );
         }
@@ -375,14 +373,14 @@ fn test_get_device_source() {
     // If we can get source from input/output devices, then they must be non-zero values.
     if let Ok(device) = get_default_device(&Scope::Input) {
         assert!(device.is_valid());
-        if let Ok(source) = get_device_source(device.into(), &Scope::Input) {
+        if let Ok(source) = device.get_device_source(&Scope::Input) {
             assert_ne!(source, 0);
         }
     }
 
     if let Ok(device) = get_default_device(&Scope::Output) {
         assert!(device.is_valid());
-        if let Ok(source) = get_device_source(device.into(), &Scope::Output) {
+        if let Ok(source) = device.get_device_source(&Scope::Output) {
             assert_ne!(source, 0);
         }
     }
@@ -393,12 +391,13 @@ fn test_get_device_source() {
 #[test]
 // #[should_panic(expected = "Bad")]
 fn test_number_of_streams_with_invalid_id() {
+    let unknown_device = AudioObject::new(kAudioObjectUnknown);
     assert_eq!(
-        number_of_streams(kAudioObjectUnknown, &Scope::Input,).unwrap_err(),
+        unknown_device.number_of_streams(&Scope::Input,).unwrap_err(),
         Error::InvalidParameters(audio_object::Error::BadObject)
     );
     assert_eq!(
-        number_of_streams(kAudioObjectUnknown, &Scope::Output).unwrap_err(),
+        unknown_device.number_of_streams(&Scope::Output).unwrap_err(),
         Error::InvalidParameters(audio_object::Error::BadObject)
     );
 }
@@ -406,10 +405,20 @@ fn test_number_of_streams_with_invalid_id() {
 #[test]
 fn test_number_of_streams() {
     if let Ok(device) = get_default_device(&Scope::Input) {
-        assert!(number_of_streams(device.into(), &Scope::Input).unwrap() > 0);
+        assert!(device.number_of_streams(&Scope::Input).unwrap() > 0);
     }
 
     if let Ok(device) = get_default_device(&Scope::Output) {
-        assert!(number_of_streams(device.into(), &Scope::Output).unwrap() > 0);
+        assert!(device.number_of_streams(&Scope::Output).unwrap() > 0);
     }
 }
+
+// Tests for Private Functions
+// ============================================================================
+// AudioStream
+// ------------------------------------
+// Skip for now ...
+
+// AudioSystemObject
+// ------------------------------------
+// Skip for now ...

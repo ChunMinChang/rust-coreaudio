@@ -19,7 +19,7 @@
 extern crate coreaudio_sys as sys;
 
 use std::fmt; // For fmt::{Debug, Formatter, Result}
-use std::mem; // For mem::size_of_val()
+use std::mem; // For mem::{size_of_val, size_of}
 use std::os::raw::c_void;
 use std::ptr; // For ptr::null()
 
@@ -27,6 +27,7 @@ use std::ptr; // For ptr::null()
 #[derive(PartialEq)]
 pub enum Error {
     BadObject,
+    BadPropertySize,
     UnknownProperty,
     SizeIsZero,
 }
@@ -40,6 +41,7 @@ impl From<sys::OSStatus> for Error {
 
         match to_bindgen_type(status) {
             sys::kAudioHardwareBadObjectError => Error::BadObject,
+            sys::kAudioHardwareBadPropertySizeError => Error::BadPropertySize,
             sys::kAudioHardwareUnknownPropertyError => Error::UnknownProperty,
             s => panic!("Unknown status: {}", s),
         }
@@ -50,6 +52,7 @@ impl fmt::Debug for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let printable = match self {
             Error::BadObject => "BadObject: The AudioObjectID passed to the function doesn't map to a valid AudioObject.",
+            Error::BadPropertySize => "BadPropertySize: An improperly sized buffer was provided when accessing the data of a property.",
             Error::UnknownProperty => "UnknownProperty: The AudioObject doesn't know about the property at the given address.",
             Error::SizeIsZero => "SizeIsZero: The size of data mapping to the given id and address is zero.",
         };
@@ -59,48 +62,6 @@ impl fmt::Debug for Error {
 
 // Public APIs
 // ============================================================================
-// TODO: 1. Consider wrapping sys::AudioObjectPropertyAddress into a
-//          single-element tuple struct.
-//       2. Check if we need Clone for AudioObject after replacing all
-//          sys::AudioObjectID by AudioObject in utils/mod.rs
-#[derive(Clone, PartialEq)]
-pub struct AudioObject(sys::AudioObjectID);
-
-impl AudioObject {
-    pub fn new(id: sys::AudioObjectID) -> Self {
-        AudioObject(id)
-    }
-    pub fn is_valid(&self) -> bool {
-        self.0 != sys::kAudioObjectUnknown
-    }
-    pub fn get_property_data<T: Default>(
-        &self,
-        address: &sys::AudioObjectPropertyAddress,
-    ) -> Result<T, Error> {
-        get_property_data::<T>(self.0, address)
-    }
-}
-
-// Cast sys::AudioObjectID into AudioObject.
-impl From<sys::AudioObjectID> for AudioObject {
-    fn from(id: sys::AudioObjectID) -> Self {
-        AudioObject::new(id)
-    }
-}
-
-// Cast AudioObject into sys::AudioObjectID.
-impl Into<sys::AudioObjectID> for AudioObject {
-    fn into(self) -> sys::AudioObjectID {
-        self.0
-    }
-}
-
-impl Default for AudioObject {
-    fn default() -> Self {
-        AudioObject::new(sys::kAudioObjectUnknown)
-    }
-}
-
 pub fn get_property_data<T: Default>(
     id: sys::AudioObjectID,
     address: &sys::AudioObjectPropertyAddress,
@@ -120,7 +81,7 @@ pub fn get_property_data_with_ptr<T>(
 ) -> Result<(), Error> {
     // assert!(id != sys::kAudioObjectUnknown, "Bad AudioObjectID!");
     let mut size = mem::size_of_val(data);
-    debug_assert_eq!(size, get_property_data_size(id, address)?);
+    assert_eq!(size, get_property_data_size(id, address)?);
     let status = audio_object_get_property_data::<T>(id, address, &mut size, data);
     convert_to_result(status)
 }
@@ -139,10 +100,7 @@ pub fn get_property_data_size(
 pub fn get_property_array<T>(
     id: sys::AudioObjectID,
     address: &sys::AudioObjectPropertyAddress,
-) -> Result<Vec<T>, Error>
-where
-    T: Sized,
-{
+) -> Result<Vec<T>, Error> {
     // assert!(id != sys::kAudioObjectUnknown, "Bad AudioObjectID!");
     let mut size = non_empty_size(get_property_data_size(id, address))?;
     let elements = size / mem::size_of::<T>();
@@ -185,7 +143,7 @@ fn convert_to_result(status: sys::OSStatus) -> Result<(), Error> {
 }
 
 // Wrappers for native platform APIs
-// ============================================================================
+// ----------------------------------------------------------------------------
 fn audio_object_get_property_data<T>(
     id: sys::AudioObjectID,
     address: &sys::AudioObjectPropertyAddress,
