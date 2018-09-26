@@ -43,9 +43,6 @@ impl fmt::Debug for Error {
 
 // Public APIs
 // ============================================================================
-// A wrapper for CFStringRef.
-// size_of::<StringRef>() == size_of::<CFStringRef>() since this struct
-// contains only one element.
 pub struct StringRef(CFStringRef);
 impl StringRef {
     pub fn new(string_ref: CFStringRef) -> Self {
