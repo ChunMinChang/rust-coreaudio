@@ -30,7 +30,7 @@ impl fmt::Debug for Error {
         let printable = match self {
             Error::InvalidComponentID => "Using the invalid audio component.",
             Error::NoComponentFound => "No audio component matching with provided settings.",
-            PropertyNotWritable => "Trying to write a non-writable property.",
+            Error::PropertyNotWritable => "Trying to write a non-writable property.",
             Error::Uninitialized => "Trying to run an uninitialized AudioUnit."
         };
         write!(f, "{}", printable)
@@ -225,7 +225,7 @@ fn convert_to_result(status: sys::OSStatus) -> Result<(), Error> {
 }
 
 // Wrappers for native platform APIs
-// ============================================================================
+// ----------------------------------------------------------------------------
 fn audio_unit_get_property_info(
     unit: sys::AudioUnit,
     id: sys::AudioUnitPropertyID,
