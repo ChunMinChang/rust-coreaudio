@@ -1,21 +1,10 @@
 extern crate coreaudio_sys;
 
 mod audio_object_utils;
+mod property_address;
 mod string_wrapper;
 
-use self::string_wrapper::StringRef;
 use self::coreaudio_sys::{
-    kAudioObjectPropertyName,
-    kAudioHardwarePropertyDevices,
-    kAudioHardwarePropertyDefaultInputDevice,
-    kAudioHardwarePropertyDefaultOutputDevice,
-    kAudioDevicePropertyStreams,
-    kAudioDevicePropertyDataSource,
-    kAudioDevicePropertyDataSourceNameForIDCFString,
-    kAudioObjectPropertyScopeInput,
-    kAudioObjectPropertyScopeOutput,
-    kAudioObjectPropertyScopeGlobal,
-    kAudioObjectPropertyElementMaster,
     AudioObjectPropertyAddress,
     AudioObjectID,
     kAudioObjectSystemObject,   // AudioObjectID
@@ -23,81 +12,24 @@ use self::coreaudio_sys::{
     AudioStreamID,              // AudioObjectID
     AudioValueTranslation,
 };
+use self::property_address::{
+    DEFAULT_INPUT_DEVICE_PROPERTY_ADDRESS,
+    DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS,
+    DEVICE_NAME_PROPERTY_ADDRESS,
+    DEVICE_PROPERTY_ADDRESS,
+    INPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS,
+    INPUT_DEVICE_SOURCE_PROPERTY_ADDRESS,
+    INPUT_DEVICE_STREAMS_PROPERTY_ADDRESS,
+    OUTPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS,
+    OUTPUT_DEVICE_SOURCE_PROPERTY_ADDRESS,
+    OUTPUT_DEVICE_STREAMS_PROPERTY_ADDRESS
+};
+use self::string_wrapper::StringRef;
+
 use std::fmt; // For fmt::{Debug, Formatter, Result}
 use std::mem; // For mem::{uninitialized(), size_of()}
 use std::os::raw::c_void;
 use std::ptr; // For ptr::null()
-
-// TODO: Move this const values to a shared module.
-const DEVICE_NAME_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
-    AudioObjectPropertyAddress {
-        mSelector: kAudioObjectPropertyName,
-        mScope: kAudioObjectPropertyScopeGlobal,
-        mElement: kAudioObjectPropertyElementMaster,
-    };
-
-const DEVICE_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
-    AudioObjectPropertyAddress {
-        mSelector: kAudioHardwarePropertyDevices,
-        mScope: kAudioObjectPropertyScopeGlobal,
-        mElement: kAudioObjectPropertyElementMaster,
-    };
-
-const DEFAULT_INPUT_DEVICE_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
-    AudioObjectPropertyAddress {
-        mSelector: kAudioHardwarePropertyDefaultInputDevice,
-        mScope: kAudioObjectPropertyScopeGlobal,
-        mElement: kAudioObjectPropertyElementMaster,
-    };
-
-const DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
-    AudioObjectPropertyAddress {
-        mSelector: kAudioHardwarePropertyDefaultOutputDevice,
-        mScope: kAudioObjectPropertyScopeGlobal,
-        mElement: kAudioObjectPropertyElementMaster,
-    };
-
-const INPUT_DEVICE_STREAMS_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
-    AudioObjectPropertyAddress {
-        mSelector: kAudioDevicePropertyStreams,
-        mScope: kAudioObjectPropertyScopeInput,
-        mElement: kAudioObjectPropertyElementMaster,
-    };
-
-const OUTPUT_DEVICE_STREAMS_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
-    AudioObjectPropertyAddress {
-        mSelector: kAudioDevicePropertyStreams,
-        mScope: kAudioObjectPropertyScopeOutput,
-        mElement: kAudioObjectPropertyElementMaster,
-    };
-
-const INPUT_DEVICE_SOURCE_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
-    AudioObjectPropertyAddress {
-        mSelector: kAudioDevicePropertyDataSource,
-        mScope: kAudioObjectPropertyScopeInput,
-        mElement: kAudioObjectPropertyElementMaster,
-    };
-
-const OUTPUT_DEVICE_SOURCE_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
-    AudioObjectPropertyAddress {
-        mSelector: kAudioDevicePropertyDataSource,
-        mScope: kAudioObjectPropertyScopeOutput,
-        mElement: kAudioObjectPropertyElementMaster,
-    };
-
-const INPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
-    AudioObjectPropertyAddress {
-        mSelector: kAudioDevicePropertyDataSourceNameForIDCFString,
-        mScope: kAudioObjectPropertyScopeInput,
-        mElement: kAudioObjectPropertyElementMaster,
-    };
-
-const OUTPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
-    AudioObjectPropertyAddress {
-        mSelector: kAudioDevicePropertyDataSourceNameForIDCFString,
-        mScope: kAudioObjectPropertyScopeOutput,
-        mElement: kAudioObjectPropertyElementMaster,
-    };
 
 // TODO: Maybe we should move this enum out since other module may also
 //       need the scope.
