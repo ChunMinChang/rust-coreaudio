@@ -1,4 +1,3 @@
-extern crate core_foundation_sys;
 extern crate coreaudio_sys;
 
 mod audio_object_utils;
