@@ -76,7 +76,86 @@ impl fmt::Debug for Error {
     }
 }
 
-// TODO: Move `AudioSystemObject`, `AudioObject` to independent module.
+// TODO: Use macro to the struct needs the following traits.
+// Commom traits for the wrappers struct of Audio*-type
+// ============================================================================
+trait GetObjectId {
+    fn get_id(&self) -> AudioObjectID;
+}
+
+trait GetPropertyData {
+    fn get_property_data<T: Default>(
+        &self,
+        address: &AudioObjectPropertyAddress,
+    ) -> Result<T, Error>
+        where Self: GetObjectId
+    {
+        audio_object_utils::get_property_data::<T>(
+            self.get_id(),
+            address
+        ).map_err(|e| e.into())
+    }
+}
+
+trait GetPropertyDataWithPtr {
+    fn get_property_data_with_ptr<T>(
+        &self,
+        address: &AudioObjectPropertyAddress,
+        data: &mut T,
+    ) -> Result<(), Error>
+        where Self: GetObjectId
+    {
+        audio_object_utils::get_property_data_with_ptr(
+            self.get_id(),
+            address,
+            data
+        ).map_err(|e| e.into())
+    }
+}
+
+trait GetPropertyDataSize {
+    fn get_property_data_size(
+        &self,
+        address: &AudioObjectPropertyAddress,
+    ) -> Result<usize, Error>
+        where Self: GetObjectId
+    {
+        audio_object_utils::get_property_data_size(
+            self.get_id(),
+            address
+        ).map_err(|e| e.into())
+    }
+}
+
+trait GetPropertyArray {
+    fn get_property_array<T>(
+        &self,
+        address: &AudioObjectPropertyAddress,
+    ) -> Result<Vec<T>, Error>
+        where Self: GetObjectId
+    {
+        audio_object_utils::get_property_array::<T>(
+            self.get_id(),
+            address
+        ).map_err(|e| e.into())
+    }
+}
+
+trait SetPropertyData {
+    fn set_property_data<T>(
+        &self,
+        address: &AudioObjectPropertyAddress,
+        data: &T,
+    ) -> Result<(), Error>
+        where Self: GetObjectId
+    {
+        audio_object_utils::set_property_data(
+            self.get_id(),
+            address,
+            data
+        ).map_err(|e| e.into())
+    }
+}
 
 // AudioSystemObject
 // ============================================================================
@@ -153,39 +232,17 @@ impl AudioSystemObject {
         };
         self.set_property_data(address, device.into()).map_err(|e| e.into())
     }
+}
 
-    fn get_property_data<T: Default>(
-        &self,
-        address: &AudioObjectPropertyAddress,
-    ) -> Result<T, Error> {
-        audio_object_utils::get_property_data::<T>(
-            self.0,
-            address
-        ).map_err(|e| e.into())
-    }
-
-    fn get_property_array<T>(
-        &self,
-        address: &AudioObjectPropertyAddress,
-    ) -> Result<Vec<T>, Error> {
-        audio_object_utils::get_property_array::<T>(
-            self.0,
-            address
-        ).map_err(|e| e.into())
-    }
-
-    fn set_property_data<T>(
-        &self,
-        address: &AudioObjectPropertyAddress,
-        data: &T,
-    ) -> Result<(), Error> {
-        audio_object_utils::set_property_data(
-            self.0,
-            address,
-            data
-        ).map_err(|e| e.into())
+impl GetObjectId for AudioSystemObject {
+    fn get_id(&self) -> AudioObjectID {
+        self.0
     }
 }
+
+impl GetPropertyData for AudioSystemObject {}
+impl SetPropertyData for AudioSystemObject {}
+impl GetPropertyArray for AudioSystemObject {}
 
 // AudioObject
 // ============================================================================
@@ -286,38 +343,6 @@ impl AudioObject {
         let size = self.get_property_data_size(address)?;
         Ok(size / mem::size_of::<AudioStream>())
     }
-
-    fn get_property_data<T: Default>(
-        &self,
-        address: &AudioObjectPropertyAddress,
-    ) -> Result<T, Error> {
-        audio_object_utils::get_property_data::<T>(
-            self.0,
-            address
-        ).map_err(|e| e.into())
-    }
-
-    fn get_property_data_with_ptr<T>(
-        &self,
-        address: &AudioObjectPropertyAddress,
-        data: &mut T,
-    ) -> Result<(), Error> {
-        audio_object_utils::get_property_data_with_ptr(
-            self.0,
-            address,
-            data
-        ).map_err(|e| e.into())
-    }
-
-    fn get_property_data_size(
-        &self,
-        address: &AudioObjectPropertyAddress,
-    ) -> Result<usize, Error> {
-        audio_object_utils::get_property_data_size(
-            self.0,
-            address
-        ).map_err(|e| e.into())
-    }
 }
 
 impl Default for AudioObject {
@@ -325,6 +350,16 @@ impl Default for AudioObject {
         AudioObject::new(kAudioObjectUnknown)
     }
 }
+
+impl GetObjectId for AudioObject {
+    fn get_id(&self) -> AudioObjectID {
+        self.0
+    }
+}
+
+impl GetPropertyData for AudioObject {}
+impl GetPropertyDataWithPtr for AudioObject {}
+impl GetPropertyDataSize for AudioObject {}
 
 // AudioStream
 // ============================================================================
