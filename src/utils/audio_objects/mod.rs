@@ -27,9 +27,8 @@ use self::property_address::{
 use self::string_wrapper::StringRef;
 
 use std::fmt; // For fmt::{Debug, Formatter, Result}
-use std::mem; // For mem::{uninitialized(), size_of()}
+use std::mem; // For mem::size_of()
 use std::os::raw::c_void;
-use std::ptr; // For ptr::null()
 
 // TODO: Maybe we should move this enum out since other module may also
 //       need the scope.
@@ -232,7 +231,7 @@ impl AudioObject {
         scope: &Scope
     ) -> Result<String, Error> {
         let mut source: u32 = self.get_device_source(scope)?;
-        let mut name: StringRef = StringRef::new(ptr::null());
+        let mut name: StringRef = StringRef::default(); // Create a null string.
 
         let mut translation: AudioValueTranslation = AudioValueTranslation {
             mInputData: &mut source as *mut u32 as *mut c_void,
