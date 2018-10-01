@@ -5,6 +5,8 @@ mod property_address;
 mod string_wrapper;
 
 use self::coreaudio_sys::{
+    AudioBuffer,
+    AudioBufferList,
     AudioObjectPropertyAddress,
     AudioObjectID,
     kAudioObjectSystemObject,   // AudioObjectID
@@ -20,15 +22,17 @@ use self::property_address::{
     INPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS,
     INPUT_DEVICE_SOURCE_PROPERTY_ADDRESS,
     INPUT_DEVICE_STREAMS_PROPERTY_ADDRESS,
+    INPUT_DEVICE_STREAM_CONFIGURATION_PROPERTY_ADDRESS,
     OUTPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS,
     OUTPUT_DEVICE_SOURCE_PROPERTY_ADDRESS,
-    OUTPUT_DEVICE_STREAMS_PROPERTY_ADDRESS
-};
+    OUTPUT_DEVICE_STREAMS_PROPERTY_ADDRESS,
+    OUTPUT_DEVICE_STREAM_CONFIGURATION_PROPERTY_ADDRESS};
 use self::string_wrapper::StringRef;
 
 use std::fmt; // For fmt::{Debug, Formatter, Result}
 use std::mem; // For mem::size_of()
 use std::os::raw::c_void;
+use std::slice;
 
 // TODO: Maybe we should move this enum out since other module may also
 //       need the scope.
@@ -135,6 +139,20 @@ trait GetPropertyArray {
         where Self: GetObjectId
     {
         audio_object_utils::get_property_array::<T>(
+            self.get_id(),
+            address
+        ).map_err(|e| e.into())
+    }
+}
+
+trait GetPropertyVeriableSizedData {
+    fn get_property_variable_sized_data<'a, T>(
+        &self,
+        address: &AudioObjectPropertyAddress,
+    ) -> Result<&'a T, Error>
+        where Self: GetObjectId
+    {
+        audio_object_utils::get_property_variable_sized_data::<T>(
             self.get_id(),
             address
         ).map_err(|e| e.into())
@@ -258,6 +276,32 @@ impl AudioObject {
         self.0 != kAudioObjectUnknown
     }
 
+    pub fn get_channel_count(
+        &self,
+        scope: &Scope
+    ) -> Result<u32, Error> {
+        let address: &AudioObjectPropertyAddress = if scope == &Scope::Input {
+            &INPUT_DEVICE_STREAM_CONFIGURATION_PROPERTY_ADDRESS
+        } else {
+            &OUTPUT_DEVICE_STREAM_CONFIGURATION_PROPERTY_ADDRESS
+        };
+        // Calculate number of channels by the AudioBufferList.
+        // The mNumberBuffers is the number of interleaved channels in the buffer.
+        // The buffer is noninterleaved if mNumberBuffers is 1.
+        let list: &AudioBufferList = self.get_property_variable_sized_data(address)?;
+        let buffers = unsafe {
+            let ptr = list.mBuffers.as_ptr() as *mut AudioBuffer;
+            let len = list.mNumberBuffers as usize; // interleaved channels.
+            slice::from_raw_parts_mut(ptr, len)
+        };
+        let mut count = 0;
+        for buffer in buffers {
+            // mNumberChannels is the number of interleaved channels in the buffer.
+            count += buffer.mNumberChannels;
+        }
+        Ok(count)
+    }
+
     pub fn get_device_label(
         &self,
         scope: &Scope
@@ -360,6 +404,7 @@ impl GetObjectId for AudioObject {
 impl GetPropertyData for AudioObject {}
 impl GetPropertyDataWithPtr for AudioObject {}
 impl GetPropertyDataSize for AudioObject {}
+impl GetPropertyVeriableSizedData for AudioObject {}
 
 // AudioStream
 // ============================================================================

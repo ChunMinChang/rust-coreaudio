@@ -5,6 +5,7 @@ use self::coreaudio_sys::{
     kAudioHardwarePropertyDevices,
     kAudioHardwarePropertyDefaultInputDevice,
     kAudioHardwarePropertyDefaultOutputDevice,
+    kAudioDevicePropertyStreamConfiguration,
     kAudioDevicePropertyStreams,
     kAudioDevicePropertyDataSource,
     kAudioDevicePropertyDataSourceNameForIDCFString,
@@ -41,6 +42,20 @@ pub const DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
         mSelector: kAudioHardwarePropertyDefaultOutputDevice,
         mScope: kAudioObjectPropertyScopeGlobal,
         mElement: kAudioObjectPropertyElementMaster,
+    };
+
+pub const INPUT_DEVICE_STREAM_CONFIGURATION_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
+    AudioObjectPropertyAddress {
+      mSelector: kAudioDevicePropertyStreamConfiguration,
+      mScope: kAudioObjectPropertyScopeInput,
+      mElement: kAudioObjectPropertyElementMaster,
+    };
+
+pub const OUTPUT_DEVICE_STREAM_CONFIGURATION_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
+    AudioObjectPropertyAddress {
+      mSelector: kAudioDevicePropertyStreamConfiguration,
+      mScope: kAudioObjectPropertyScopeOutput,
+      mElement: kAudioObjectPropertyElementMaster,
     };
 
 pub const INPUT_DEVICE_STREAMS_PROPERTY_ADDRESS: AudioObjectPropertyAddress =

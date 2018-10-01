@@ -103,14 +103,24 @@ pub fn get_property_array<T>(
 ) -> Result<Vec<T>, Error> {
     // assert!(id != sys::kAudioObjectUnknown, "Bad AudioObjectID!");
     let mut size = non_empty_size(get_property_data_size(id, address))?;
-    let elements = size / mem::size_of::<T>();
-    let mut array = Vec::<T>::with_capacity(elements);
-    unsafe {
-        array.set_len(elements);
-    }
+    let mut array = allocate_buffer::<T>(size);
     let status = audio_object_get_property_data::<T>(id, address, &mut size, array.as_mut_ptr());
     convert_to_result(status)?;
     Ok(array)
+}
+
+pub fn get_property_variable_sized_data<'a, T>(
+    id: sys::AudioObjectID,
+    address: &sys::AudioObjectPropertyAddress,
+) -> Result<&'a T, Error> {
+    // assert!(id != sys::kAudioObjectUnknown, "Bad AudioObjectID!");
+    let mut size = non_empty_size(get_property_data_size(id, address))?;
+    let mut buffer = allocate_buffer::<u8>(size);
+    let ptr = buffer.as_mut_ptr() as *mut T;
+    let status = audio_object_get_property_data::<T>(id, address, &mut size, ptr);
+    convert_to_result(status)?;
+    let data = unsafe { &(*ptr) };
+    Ok(data)
 }
 
 pub fn set_property_data<T>(
@@ -126,6 +136,15 @@ pub fn set_property_data<T>(
 
 // Private APIs
 // ============================================================================
+fn allocate_buffer<T>(size: usize) -> Vec<T> {
+    let elements = size / mem::size_of::<T>();
+    let mut buffer = Vec::<T>::with_capacity(elements);
+    unsafe {
+        buffer.set_len(elements);
+    }
+    buffer
+}
+
 fn non_empty_size(result: Result<usize, Error>) -> Result<usize, Error> {
     let value = result?;
     if value > 0 {
