@@ -66,7 +66,7 @@ impl Parameters {
         // The channels in the buffer is set to non-interleaved by
         // AudioFormatFlags here, hence the `bytes_per_frame` is same as
         // `bytes_per_frame` and `AudioBufferList.mNumberBuffers` received from
-        // callback `audio_unit_render_callback` is same as the numbeb of
+        // callback `audio_unit_render_callback` is same as the number of
         // channels we have.
         let bytes_per_frame = byte_size;
         let bytes_per_packet = bytes_per_frame * frames_per_packet;
@@ -233,7 +233,7 @@ impl<T> RenderCallback for Stream<T> {
     ) -> sys::OSStatus {
         let buffers = unsafe {
             let ptr = (*io_data).mBuffers.as_ptr() as *mut sys::AudioBuffer;
-            let len = (*io_data).mNumberBuffers as usize; // non-interleaved channels.
+            let len = (*io_data).mNumberBuffers as usize; // interleaved channels.
             slice::from_raw_parts_mut(ptr, len)
         };
         let data = AudioData {
