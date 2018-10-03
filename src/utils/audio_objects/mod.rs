@@ -21,10 +21,12 @@ use self::property_address::{
     DEVICE_NAME_PROPERTY_ADDRESS,
     DEVICE_UID_PROPERTY_ADDRESS,
     DEVICE_PROPERTY_ADDRESS,
+    INPUT_DEVICE_SAMPLE_RATE_PROPERTY_ADDRESS,
     INPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS,
     INPUT_DEVICE_SOURCE_PROPERTY_ADDRESS,
     INPUT_DEVICE_STREAMS_PROPERTY_ADDRESS,
     INPUT_DEVICE_STREAM_CONFIGURATION_PROPERTY_ADDRESS,
+    OUTPUT_DEVICE_SAMPLE_RATE_PROPERTY_ADDRESS,
     OUTPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS,
     OUTPUT_DEVICE_SOURCE_PROPERTY_ADDRESS,
     OUTPUT_DEVICE_STREAMS_PROPERTY_ADDRESS,
@@ -314,6 +316,18 @@ impl AudioObject {
         let manufacturer: StringRef =
             self.get_property_data(&DEVICE_MANUFACTURER_PROPERTY_ADDRESS)?;
         manufacturer.into_string().map_err(Error::ConversionFailed)
+    }
+
+    pub fn get_default_rate(
+        &self,
+        scope: &Scope
+    ) -> Result<f64, Error> {
+        let address: &AudioObjectPropertyAddress = if scope == &Scope::Input {
+            &INPUT_DEVICE_SAMPLE_RATE_PROPERTY_ADDRESS
+        } else {
+            &OUTPUT_DEVICE_SAMPLE_RATE_PROPERTY_ADDRESS
+        };
+        self.get_property_data::<f64>(address).map_err(|e| e.into())
     }
 
     pub fn get_device_label(
