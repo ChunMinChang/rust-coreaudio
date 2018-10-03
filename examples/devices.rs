@@ -40,6 +40,7 @@ fn get_device_info(device: &utils::AudioObject, scope: &utils::Scope) -> String 
     info += (to_string(scope) + ") ").as_ref();
     info += device.get_device_label(scope).unwrap().as_ref();
     info += (" <channels: ".to_owned() + device.get_channel_count(scope).unwrap().to_string().as_str() + ">").as_str();
+    info += (" <uid: ".to_owned() + device.get_uid().unwrap().as_str() + ">").as_str();
     info
 }
 

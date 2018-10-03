@@ -1,6 +1,7 @@
 extern crate coreaudio_sys;
 
 use self::coreaudio_sys::{
+    kAudioDevicePropertyDeviceUID,
     kAudioObjectPropertyName,
     kAudioHardwarePropertyDevices,
     kAudioHardwarePropertyDefaultInputDevice,
@@ -15,6 +16,13 @@ use self::coreaudio_sys::{
     kAudioObjectPropertyElementMaster,
     AudioObjectPropertyAddress,
 };
+
+pub const DEVICE_UID_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
+    AudioObjectPropertyAddress {
+        mSelector: kAudioDevicePropertyDeviceUID,
+        mScope: kAudioObjectPropertyScopeGlobal,
+        mElement: kAudioObjectPropertyElementMaster,
+    };
 
 pub const DEVICE_NAME_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
     AudioObjectPropertyAddress {

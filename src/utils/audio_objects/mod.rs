@@ -18,6 +18,7 @@ use self::property_address::{
     DEFAULT_INPUT_DEVICE_PROPERTY_ADDRESS,
     DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS,
     DEVICE_NAME_PROPERTY_ADDRESS,
+    DEVICE_UID_PROPERTY_ADDRESS,
     DEVICE_PROPERTY_ADDRESS,
     INPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS,
     INPUT_DEVICE_SOURCE_PROPERTY_ADDRESS,
@@ -300,6 +301,12 @@ impl AudioObject {
             count += buffer.mNumberChannels;
         }
         Ok(count)
+    }
+
+    pub fn get_uid(&self) -> Result<String, Error> {
+        let uid: StringRef =
+            self.get_property_data(&DEVICE_UID_PROPERTY_ADDRESS)?;
+        uid.into_string().map_err(Error::ConversionFailed)
     }
 
     pub fn get_device_label(
