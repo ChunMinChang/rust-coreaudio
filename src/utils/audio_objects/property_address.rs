@@ -18,6 +18,7 @@ use self::coreaudio_sys::{
     AudioObjectPropertyAddress,
 };
 
+// TODO: Will it be different for input and output?
 pub const DEVICE_UID_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
     AudioObjectPropertyAddress {
         mSelector: kAudioDevicePropertyDeviceUID,
@@ -25,6 +26,7 @@ pub const DEVICE_UID_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
         mElement: kAudioObjectPropertyElementMaster,
     };
 
+// TODO: Will it be different for input and output?
 pub const DEVICE_MANUFACTURER_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
     AudioObjectPropertyAddress {
         mSelector: kAudioObjectPropertyManufacturer,
