@@ -17,6 +17,7 @@ use self::coreaudio_sys::{
 use self::property_address::{
     DEFAULT_INPUT_DEVICE_PROPERTY_ADDRESS,
     DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS,
+    DEVICE_MANUFACTURER_PROPERTY_ADDRESS,
     DEVICE_NAME_PROPERTY_ADDRESS,
     DEVICE_UID_PROPERTY_ADDRESS,
     DEVICE_PROPERTY_ADDRESS,
@@ -307,6 +308,12 @@ impl AudioObject {
         let uid: StringRef =
             self.get_property_data(&DEVICE_UID_PROPERTY_ADDRESS)?;
         uid.into_string().map_err(Error::ConversionFailed)
+    }
+
+    pub fn get_manufacturer(&self) -> Result<String, Error> {
+        let manufacturer: StringRef =
+            self.get_property_data(&DEVICE_MANUFACTURER_PROPERTY_ADDRESS)?;
+        manufacturer.into_string().map_err(Error::ConversionFailed)
     }
 
     pub fn get_device_label(

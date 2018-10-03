@@ -5,15 +5,23 @@ struct DeviceInfo {
     id: u32,
     label: String,
     uid: String,
+    manufacturer: String,
     channels: u32,
 }
 
 impl DeviceInfo {
-    fn new(id: u32, label: String, uid: String, channels: u32) -> Self {
+    fn new(
+        id: u32,
+        label: String,
+        uid: String,
+        manufacturer: String,
+        channels: u32
+    ) -> Self {
         DeviceInfo {
             id,
             label,
             uid,
+            manufacturer,
             channels,
         }
     }
@@ -55,6 +63,7 @@ fn get_device_info(
         utils::GetObjectId::get_id(device),
         device.get_device_label(scope).unwrap(),
         device.get_uid().unwrap(),
+        device.get_manufacturer().unwrap(),
         device.get_channel_count(scope).unwrap(),
     ))
 }
@@ -62,6 +71,7 @@ fn get_device_info(
 fn print_device_info(info: &DeviceInfo) {
     println!("{}: {}", info.id, info.label);
     println!("\tuid: {}", info.uid);
+    println!("\tmanufacturer: {}", info.manufacturer);
     println!("\tchannels: {}", info.channels);
 }
 
