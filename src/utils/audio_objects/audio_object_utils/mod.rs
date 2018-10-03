@@ -62,13 +62,6 @@ impl fmt::Debug for Error {
 
 // Public APIs
 // ============================================================================
-pub fn has_property(
-    id: sys::AudioObjectID,
-    address: &sys::AudioObjectPropertyAddress
-) -> bool {
-    audio_object_has_property(id, address)
-}
-
 pub fn get_property_data<T: Default>(
     id: sys::AudioObjectID,
     address: &sys::AudioObjectPropertyAddress,
@@ -170,18 +163,6 @@ fn convert_to_result(status: sys::OSStatus) -> Result<(), Error> {
 
 // Wrappers for native platform APIs
 // ----------------------------------------------------------------------------
-fn audio_object_has_property(
-    id: sys::AudioObjectID,
-    address: &sys::AudioObjectPropertyAddress,
-) -> bool {
-    unsafe {
-        sys::AudioObjectHasProperty(
-            id,
-            address,
-        ) != 0
-    }
-}
-
 fn audio_object_get_property_data<T>(
     id: sys::AudioObjectID,
     address: &sys::AudioObjectPropertyAddress,

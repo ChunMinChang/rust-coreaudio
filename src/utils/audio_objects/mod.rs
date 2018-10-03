@@ -95,20 +95,6 @@ pub trait GetObjectId {
     fn get_id(&self) -> AudioObjectID;
 }
 
-trait HasProperty {
-    fn has_property(
-        &self,
-        address: &AudioObjectPropertyAddress,
-    ) -> bool
-        where Self: GetObjectId
-    {
-        audio_object_utils::has_property(
-            self.get_id(),
-            address
-        )
-    }
-}
-
 trait GetPropertyData {
     fn get_property_data<T: Default>(
         &self,
@@ -358,10 +344,6 @@ impl AudioObject {
             &OUTPUT_DEVICE_AVAILABLE_SAMPLE_RATE_PROPERTY_ADDRESS
         };
 
-        if !self.has_property(address) {
-            return Ok((0.0, 0.0));
-        }
-
         let ranges: Vec<AudioValueRange> = self.get_property_array(address)?;
 
         let mut max = f64::MIN;
@@ -482,7 +464,6 @@ impl fmt::Display for AudioObject {
     }
 }
 
-impl HasProperty for AudioObject {}
 impl GetPropertyData for AudioObject {}
 impl GetPropertyDataWithPtr for AudioObject {}
 impl GetPropertyDataSize for AudioObject {}
