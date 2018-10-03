@@ -84,7 +84,7 @@ impl fmt::Debug for Error {
 // TODO: Use macro to the struct needs the following traits.
 // Commom traits for the wrappers struct of Audio*-type
 // ============================================================================
-trait GetObjectId {
+pub trait GetObjectId {
     fn get_id(&self) -> AudioObjectID;
 }
 

@@ -1,7 +1,7 @@
 mod audio_objects;
 
 use self::audio_objects::AudioSystemObject;
-pub use self::audio_objects::{AudioObject, Scope};
+pub use self::audio_objects::{AudioObject, Scope, GetObjectId};
 
 #[derive(Debug, PartialEq)]
 pub enum Error {

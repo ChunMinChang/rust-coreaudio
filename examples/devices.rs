@@ -1,47 +1,72 @@
 extern crate rust_coreaudio;
 use rust_coreaudio::utils;
 
-fn show_result() {
-    for device in utils::get_all_devices().unwrap() {
-        show_device_info(&device);
+struct DeviceInfo {
+    id: u32,
+    label: String,
+    uid: String,
+    channels: u32,
+}
+
+impl DeviceInfo {
+    fn new(id: u32, label: String, uid: String, channels: u32) -> Self {
+        DeviceInfo {
+            id,
+            label,
+            uid,
+            channels,
+        }
     }
 }
 
-fn show_device_info(device: &utils::AudioObject) {
-    print!("Device {}: ", device);
-
+fn print_devices_info() {
     let scopes = vec![
         utils::Scope::Input,
         utils::Scope::Output
     ];
 
-    let mut info: String = String::from("");
     for scope in &scopes {
+        print_devices_info_in_scope(scope);
+    }
+}
+
+fn print_devices_info_in_scope(scope: &utils::Scope) {
+    print_demarcation(scope);
+    let devices = utils::get_all_devices().unwrap();
+    for device in devices {
         if !device.in_scope(scope).unwrap() {
             continue;
         }
-        if !info.is_empty() {
-            info += ", ";
-        }
-        info += get_device_info(device, scope).as_ref();
+
+        let info = get_device_info(&device, scope).unwrap();
+        print_device_info(&info);
     }
-    println!("{}", info);
 }
 
-fn get_device_info(device: &utils::AudioObject, scope: &utils::Scope) -> String {
-    let default_device = utils::get_default_device(scope).unwrap();
-    let mut info = String::from(
-        if device == &default_device {
-            "(default "
-        } else {
-            "("
-        }
-    );
-    info += (to_string(scope) + ") ").as_ref();
-    info += device.get_device_label(scope).unwrap().as_ref();
-    info += (" <channels: ".to_owned() + device.get_channel_count(scope).unwrap().to_string().as_str() + ">").as_str();
-    info += (" <uid: ".to_owned() + device.get_uid().unwrap().as_str() + ">").as_str();
-    info
+fn get_device_info(
+    device: &utils::AudioObject,
+    scope: &utils::Scope
+) -> Option<DeviceInfo> {
+    if !device.in_scope(scope).unwrap() {
+        return None;
+    }
+
+    Some(DeviceInfo::new(
+        utils::GetObjectId::get_id(device),
+        device.get_device_label(scope).unwrap(),
+        device.get_uid().unwrap(),
+        device.get_channel_count(scope).unwrap(),
+    ))
+}
+
+fn print_device_info(info: &DeviceInfo) {
+    println!("{}: {}", info.id, info.label);
+    println!("\tuid: {}", info.uid);
+    println!("\tchannels: {}", info.channels);
+}
+
+fn print_demarcation(scope: &utils::Scope) {
+    println!("{}\n----------", to_string(scope));
 }
 
 fn change_default_devices() {
@@ -77,6 +102,6 @@ fn to_string(scope: &utils::Scope) -> String {
 }
 
 fn main() {
-    show_result();
+    print_devices_info();
     change_default_devices();
 }
