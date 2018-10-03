@@ -408,6 +408,14 @@ impl GetObjectId for AudioObject {
     }
 }
 
+// TODO: Find a way to auto-implement Display for type that implements
+//       GetObjectId.
+impl fmt::Display for AudioObject {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.get_id())
+    }
+}
+
 impl GetPropertyData for AudioObject {}
 impl GetPropertyDataWithPtr for AudioObject {}
 impl GetPropertyDataSize for AudioObject {}

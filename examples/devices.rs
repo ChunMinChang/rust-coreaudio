@@ -8,7 +8,7 @@ fn show_result() {
 }
 
 fn show_device_info(device: &utils::AudioObject) {
-    print!("Device {:?}: ", device);
+    print!("Device {}: ", device);
 
     let scopes = vec![
         utils::Scope::Input,
