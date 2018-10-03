@@ -74,6 +74,7 @@ pub fn get_property_data<T: Default>(
     Ok(data)
 }
 
+// TODO: rename to get_property_data_with_ref
 pub fn get_property_data_with_ptr<T>(
     id: sys::AudioObjectID,
     address: &sys::AudioObjectPropertyAddress,
