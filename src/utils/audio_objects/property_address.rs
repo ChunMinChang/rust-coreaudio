@@ -1,6 +1,7 @@
 extern crate coreaudio_sys;
 
 use self::coreaudio_sys::{
+    kAudioDevicePropertyAvailableNominalSampleRates,
     kAudioDevicePropertyDeviceUID,
     kAudioDevicePropertyNominalSampleRate,
     kAudioObjectPropertyManufacturer,
@@ -131,6 +132,22 @@ pub const INPUT_DEVICE_SAMPLE_RATE_PROPERTY_ADDRESS: AudioObjectPropertyAddress 
 pub const OUTPUT_DEVICE_SAMPLE_RATE_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
     AudioObjectPropertyAddress {
         mSelector: kAudioDevicePropertyNominalSampleRate,
+        mScope: kAudioObjectPropertyScopeOutput,
+        mElement: kAudioObjectPropertyElementMaster,
+    };
+
+// TODO: Will it be different from output's one?
+pub const INPUT_DEVICE_AVAILABLE_SAMPLE_RATE_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
+    AudioObjectPropertyAddress {
+        mSelector: kAudioDevicePropertyAvailableNominalSampleRates,
+        mScope: kAudioObjectPropertyScopeInput,
+        mElement: kAudioObjectPropertyElementMaster,
+    };
+
+// TODO: Will it be different from input's one?
+pub const OUTPUT_DEVICE_AVAILABLE_SAMPLE_RATE_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
+    AudioObjectPropertyAddress {
+        mSelector: kAudioDevicePropertyAvailableNominalSampleRates,
         mScope: kAudioObjectPropertyScopeOutput,
         mElement: kAudioObjectPropertyElementMaster,
     };

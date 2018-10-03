@@ -8,6 +8,7 @@ struct DeviceInfo {
     manufacturer: String,
     channels: u32,
     rate: f64,
+    rate_range: (f64, f64),
 }
 
 impl DeviceInfo {
@@ -18,6 +19,7 @@ impl DeviceInfo {
         manufacturer: String,
         channels: u32,
         rate: f64,
+        rate_range: (f64, f64),
     ) -> Self {
         DeviceInfo {
             id,
@@ -26,6 +28,7 @@ impl DeviceInfo {
             manufacturer,
             channels,
             rate,
+            rate_range,
         }
     }
 }
@@ -69,6 +72,7 @@ fn get_device_info(
         device.get_manufacturer().unwrap(),
         device.get_channel_count(scope).unwrap(),
         device.get_default_rate(scope).unwrap(),
+        device.get_rate_range(scope).unwrap(),
     ))
 }
 
@@ -78,6 +82,7 @@ fn print_device_info(info: &DeviceInfo) {
     println!("\tmanufacturer: {}", info.manufacturer);
     println!("\tchannels: {}", info.channels);
     println!("\trate: {}", info.rate);
+    println!("\trate range: {} - {}", info.rate_range.0, info.rate_range.1);
 }
 
 fn print_demarcation(scope: &utils::Scope) {

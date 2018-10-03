@@ -9,6 +9,7 @@ use self::coreaudio_sys::{
     AudioBufferList,
     AudioObjectPropertyAddress,
     AudioObjectID,
+    AudioValueRange,
     kAudioObjectSystemObject,   // AudioObjectID
     kAudioObjectUnknown,        // AudioObjectID
     AudioStreamID,              // AudioObjectID
@@ -21,11 +22,13 @@ use self::property_address::{
     DEVICE_NAME_PROPERTY_ADDRESS,
     DEVICE_UID_PROPERTY_ADDRESS,
     DEVICE_PROPERTY_ADDRESS,
+    INPUT_DEVICE_AVAILABLE_SAMPLE_RATE_PROPERTY_ADDRESS,
     INPUT_DEVICE_SAMPLE_RATE_PROPERTY_ADDRESS,
     INPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS,
     INPUT_DEVICE_SOURCE_PROPERTY_ADDRESS,
     INPUT_DEVICE_STREAMS_PROPERTY_ADDRESS,
     INPUT_DEVICE_STREAM_CONFIGURATION_PROPERTY_ADDRESS,
+    OUTPUT_DEVICE_AVAILABLE_SAMPLE_RATE_PROPERTY_ADDRESS,
     OUTPUT_DEVICE_SAMPLE_RATE_PROPERTY_ADDRESS,
     OUTPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS,
     OUTPUT_DEVICE_SOURCE_PROPERTY_ADDRESS,
@@ -33,6 +36,7 @@ use self::property_address::{
     OUTPUT_DEVICE_STREAM_CONFIGURATION_PROPERTY_ADDRESS};
 use self::string_wrapper::StringRef;
 
+use std::f64; // For f64::{MAX, MIN}
 use std::fmt; // For fmt::{Debug, Formatter, Result}
 use std::mem; // For mem::size_of()
 use std::os::raw::c_void;
@@ -330,6 +334,29 @@ impl AudioObject {
         self.get_property_data::<f64>(address).map_err(|e| e.into())
     }
 
+    pub fn get_rate_range(
+        &self,
+        scope: &Scope
+    ) -> Result<(f64, f64), Error> {
+        let address: &AudioObjectPropertyAddress = if scope == &Scope::Input {
+            &INPUT_DEVICE_AVAILABLE_SAMPLE_RATE_PROPERTY_ADDRESS
+        } else {
+            &OUTPUT_DEVICE_AVAILABLE_SAMPLE_RATE_PROPERTY_ADDRESS
+        };
+
+        let ranges: Vec<AudioValueRange> = self.get_property_array(address)?;
+
+        let mut max = f64::MIN;
+        let mut min = f64::MAX;
+        for range in ranges {
+            max = get_max(max, range.mMaximum);
+            min = get_min(min, range.mMinimum);
+        }
+
+        assert!(max >= min);
+        Ok((min, max))
+    }
+
     pub fn get_device_label(
         &self,
         scope: &Scope
@@ -441,10 +468,29 @@ impl GetPropertyData for AudioObject {}
 impl GetPropertyDataWithPtr for AudioObject {}
 impl GetPropertyDataSize for AudioObject {}
 impl GetPropertyVeriableSizedData for AudioObject {}
+impl GetPropertyArray for AudioObject {}
 
 // AudioStream
 // ============================================================================
 struct AudioStream(AudioStreamID);
+
+// Utils
+// ============================================================================
+fn get_min<T: PartialOrd>(a: T, b: T) -> T {
+    if a < b {
+        a
+    } else {
+        b
+    }
+}
+
+fn get_max<T: PartialOrd>(a: T, b: T) -> T {
+    if a > b {
+        a
+    } else {
+        b
+    }
+}
 
 // Tests
 // ============================================================================
