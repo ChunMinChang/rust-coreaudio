@@ -2,6 +2,7 @@ extern crate coreaudio_sys;
 
 use self::coreaudio_sys::{
     kAudioDevicePropertyAvailableNominalSampleRates,
+    kAudioDevicePropertyBufferFrameSizeRange,
     kAudioDevicePropertyDeviceUID,
     kAudioDevicePropertyNominalSampleRate,
     kAudioDevicePropertyLatency,
@@ -165,6 +166,20 @@ pub const OUTPUT_DEVICE_LATENCY_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
     AudioObjectPropertyAddress {
         mSelector: kAudioDevicePropertyLatency,
         mScope: kAudioObjectPropertyScopeOutput,
+        mElement: kAudioObjectPropertyElementMaster,
+    };
+
+pub const INPUT_DEVICE_BUFFER_FRAME_SIZE_RANGE_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
+    AudioObjectPropertyAddress {
+        mSelector: kAudioDevicePropertyBufferFrameSizeRange,
+        mScope: kAudioObjectPropertyScopeInput,
+        mElement: kAudioObjectPropertyElementMaster,
+    };
+
+pub const OUTPUT_DEVICE_BUFFER_FRAME_SIZE_RANGE_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
+    AudioObjectPropertyAddress {
+        mSelector: kAudioDevicePropertyBufferFrameSizeRange,
+        mScope: kAudioObjectPropertyScopeInput,
         mElement: kAudioObjectPropertyElementMaster,
     };
 

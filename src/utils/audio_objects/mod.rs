@@ -23,6 +23,7 @@ use self::property_address::{
     DEVICE_UID_PROPERTY_ADDRESS,
     DEVICE_PROPERTY_ADDRESS,
     INPUT_DEVICE_AVAILABLE_SAMPLE_RATE_PROPERTY_ADDRESS,
+    INPUT_DEVICE_BUFFER_FRAME_SIZE_RANGE_PROPERTY_ADDRESS,
     INPUT_DEVICE_LATENCY_PROPERTY_ADDRESS,
     INPUT_DEVICE_SAMPLE_RATE_PROPERTY_ADDRESS,
     INPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS,
@@ -31,6 +32,7 @@ use self::property_address::{
     INPUT_DEVICE_STREAM_CONFIGURATION_PROPERTY_ADDRESS,
     INPUT_STREAM_LATENCY_PROPERTY_ADDRESS,
     OUTPUT_DEVICE_AVAILABLE_SAMPLE_RATE_PROPERTY_ADDRESS,
+    OUTPUT_DEVICE_BUFFER_FRAME_SIZE_RANGE_PROPERTY_ADDRESS,
     OUTPUT_DEVICE_LATENCY_PROPERTY_ADDRESS,
     OUTPUT_DEVICE_SAMPLE_RATE_PROPERTY_ADDRESS,
     OUTPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS,
@@ -401,6 +403,19 @@ impl AudioObject {
     //     scope: &Scope
     // ) -> Result<u32, Error> {
     // }
+
+    pub fn get_buffer_frame_size_range(
+        &self,
+        scope: &Scope
+    ) -> Result<(f64, f64), Error> {
+        let address: &AudioObjectPropertyAddress = if scope == &Scope::Input {
+            &INPUT_DEVICE_BUFFER_FRAME_SIZE_RANGE_PROPERTY_ADDRESS
+        } else {
+            &OUTPUT_DEVICE_BUFFER_FRAME_SIZE_RANGE_PROPERTY_ADDRESS
+        };
+        let range: AudioValueRange = self.get_property_data(address)?;
+        Ok((range.mMinimum, range.mMaximum))
+    }
 
     pub fn get_device_label(
         &self,
