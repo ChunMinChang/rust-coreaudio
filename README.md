@@ -13,8 +13,9 @@ This is a draft to play CoreAudio APIs in *Rust*. The aim for this project is to
     - [string][gist-string-wrapper]
     - [directly get inner element data from C API][gist-same-size](since their sizes are same!)
     - [CoreAudio][gist-audioobject]
-- Use *examples* to separate the example code for *stream* module and *utils* module.
-- **Add tests** for *audio_unit* and *stream* modules.
+- **Tests**
+  - Unit test for *audio_unit* and *stream* modules.
+  - Integration test for using *stream* and *utils(devices)* at the same time.
 
 [gist-string-wrapper]: https://gist.github.com/ChunMinChang/25f3608c285f1abf2a5c289d5f758427 "Using tuple struct to wrap native C types"
 [gist-same-size]: https://gist.github.com/ChunMinChang/1acf672babd4e8f79fcf83fa228d1461 "Wrap native types by tuple struct"
