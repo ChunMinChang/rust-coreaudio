@@ -70,12 +70,11 @@ pub fn get_property_data<T: Default>(
     // When this function fails(returns Err), the `data` will be dropped and
     // T::drop() will be fired.
     let mut data: T = Default::default();
-    get_property_data_with_ptr(id, address, &mut data)?;
+    get_property_data_with_ref(id, address, &mut data)?;
     Ok(data)
 }
 
-// TODO: rename to get_property_data_with_ref
-pub fn get_property_data_with_ptr<T>(
+pub fn get_property_data_with_ref<T>(
     id: sys::AudioObjectID,
     address: &sys::AudioObjectPropertyAddress,
     data: &mut T,

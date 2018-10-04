@@ -60,14 +60,14 @@ fn test_get_property_data() {
     );
 }
 
-// get_property_data_with_ptr
+// get_property_data_with_ref
 // ------------------------------------
 #[test]
 // #[should_panic(expected = "Bad")]
-fn test_get_property_data_with_ptr_with_invalid_id() {
+fn test_get_property_data_with_ref_with_invalid_id() {
     let mut id: sys::AudioObjectID = sys::kAudioObjectUnknown;
     assert_eq!(
-        get_property_data_with_ptr(
+        get_property_data_with_ref(
             sys::kAudioObjectUnknown,
             &DEFAULT_INPUT_DEVICE_PROPERTY_ADDRESS,
             &mut id,
@@ -75,7 +75,7 @@ fn test_get_property_data_with_ptr_with_invalid_id() {
         Error::BadObject
     );
     assert_eq!(
-        get_property_data_with_ptr(
+        get_property_data_with_ref(
             sys::kAudioObjectUnknown,
             &DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS,
             &mut id,
@@ -85,17 +85,17 @@ fn test_get_property_data_with_ptr_with_invalid_id() {
 }
 
 #[test]
-fn test_get_property_data_with_ptr() {
+fn test_get_property_data_with_ref() {
     let mut id: sys::AudioObjectID = sys::kAudioObjectUnknown;
     assert!(
-        get_property_data_with_ptr(
+        get_property_data_with_ref(
             sys::kAudioObjectSystemObject,
             &DEFAULT_INPUT_DEVICE_PROPERTY_ADDRESS,
             &mut id,
         ).is_ok()
     );
     assert!(
-        get_property_data_with_ptr(
+        get_property_data_with_ref(
             sys::kAudioObjectSystemObject,
             &DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS,
             &mut id,

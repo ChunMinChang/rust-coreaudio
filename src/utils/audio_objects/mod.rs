@@ -96,14 +96,14 @@ trait GetPropertyData {
 }
 
 trait GetPropertyDataWithPtr {
-    fn get_property_data_with_ptr<T>(
+    fn get_property_data_with_ref<T>(
         &self,
         address: &AudioObjectPropertyAddress,
         data: &mut T,
     ) -> Result<(), Error>
         where Self: GetObjectId
     {
-        audio_object_utils::get_property_data_with_ptr(
+        audio_object_utils::get_property_data_with_ref(
             self.get_id(),
             address,
             data
@@ -446,7 +446,7 @@ impl AudioObject {
             Property::DeviceSourceName
         );
 
-        self.get_property_data_with_ptr(&address, &mut translation)?;
+        self.get_property_data_with_ref(&address, &mut translation)?;
         name.into_string().map_err(Error::ConversionFailed)
     }
 
