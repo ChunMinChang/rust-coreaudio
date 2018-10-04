@@ -95,7 +95,7 @@ trait GetPropertyData {
     }
 }
 
-trait GetPropertyDataWithPtr {
+trait GetPropertyDataWithRef {
     fn get_property_data_with_ref<T>(
         &self,
         address: &AudioObjectPropertyAddress,
@@ -318,7 +318,7 @@ impl AudioObject {
         manufacturer.into_string().map_err(Error::ConversionFailed)
     }
 
-    pub fn get_default_rate(
+    pub fn get_rate(
         &self,
         scope: &Scope
     ) -> Result<f64, Error> {
@@ -401,37 +401,43 @@ impl AudioObject {
         Ok((range.mMinimum, range.mMaximum))
     }
 
-    pub fn get_device_label(
+    pub fn get_label(
         &self,
         scope: &Scope
     ) -> Result<String, Error> {
         // Some USB headset(e.g., Plantronics .Audio 628) fails to get its
         // source. In that case, we return device name instead.
-        match self.get_device_source_name(scope) {
+        match self.get_source_name(scope) {
             Ok(name) => Ok(name),
             Err(Error::WrongScope) => Err(Error::WrongScope),
-            Err(_) => self.get_device_name(),
+            Err(_) => self.get_name(),
         }
     }
 
-    pub fn get_device_name(&self) -> Result<String, Error> {
+    pub fn get_name(&self) -> Result<String, Error> {
         // The size of `StringRef` is same as the size of `CFStringRef`, so the
         // queried data of `CFStringRef` can be stored into the memory of a
         // `CFStringRef` variable directly.
         // If the calling fails, the StringRef::drop() will be called but
         // nothing will be released since StringRef::Default::default() is a
         // null string.
+        // TODO: Considering replaceing all `get_property_data` to
+        //       `get_property_data_with_ref` so we don't need `Default`
+        //       (Default<T> is used to prevent a random T-type memory from
+        //        being released when the `get_property_data` fails.).
+        //       Remember to change name of `get_property_data_with_ref` to
+        //       `get_property_data` if we'd like to do so.
         let property_address = get_global_property_address(Property::DeviceName);
         let name: StringRef =
             self.get_property_data(&property_address)?;
         name.into_string().map_err(Error::ConversionFailed)
     }
 
-    pub fn get_device_source_name(
+    pub fn get_source_name(
         &self,
         scope: &Scope
     ) -> Result<String, Error> {
-        let mut source: u32 = self.get_device_source(scope)?;
+        let mut source: u32 = self.get_source(scope)?;
         let mut name: StringRef = StringRef::default(); // Create a null string.
 
         let mut translation: AudioValueTranslation = AudioValueTranslation {
@@ -450,7 +456,15 @@ impl AudioObject {
         name.into_string().map_err(Error::ConversionFailed)
     }
 
-    fn get_device_source(
+    pub fn in_scope(
+        &self,
+        scope: &Scope
+    ) -> Result<bool, Error> {
+        let streams = self.number_of_streams(scope)?;
+        Ok(streams > 0)
+    }
+
+    fn get_source(
         &self,
         scope: &Scope
     ) -> Result<u32, Error> {
@@ -464,14 +478,6 @@ impl AudioObject {
         );
 
         self.get_property_data::<u32>(&address).map_err(|e| e.into())
-    }
-
-    pub fn in_scope(
-        &self,
-        scope: &Scope
-    ) -> Result<bool, Error> {
-        let streams = self.number_of_streams(scope)?;
-        Ok(streams > 0)
     }
 
     fn number_of_streams(
@@ -508,7 +514,7 @@ impl fmt::Display for AudioObject {
 }
 
 impl GetPropertyData for AudioObject {}
-impl GetPropertyDataWithPtr for AudioObject {}
+impl GetPropertyDataWithRef for AudioObject {}
 impl GetPropertyDataSize for AudioObject {}
 impl GetPropertyVeriableSizedData for AudioObject {}
 impl GetPropertyArray for AudioObject {}

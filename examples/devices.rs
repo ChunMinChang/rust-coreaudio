@@ -76,11 +76,11 @@ fn get_device_info(
 
     Some(DeviceInfo::new(
         utils::GetObjectId::get_id(device),
-        device.get_device_label(scope).unwrap(),
+        device.get_label(scope).unwrap(),
         device.get_uid().unwrap(),
         device.get_manufacturer().unwrap(),
         device.get_channel_count(scope).unwrap(),
-        device.get_default_rate(scope).unwrap(),
+        device.get_rate(scope).unwrap(),
         device.get_rate_range(scope).unwrap(),
         device.get_device_latency(scope).unwrap(),
         device.get_stream_latency(scope).unwrap(),
@@ -126,8 +126,8 @@ fn change_default_device(scope: &utils::Scope) {
 
     println!("{} device is changed from {:?} to {:?}!",
              to_string(scope),
-             current_device.get_device_label(scope).unwrap(),
-             new_device.get_device_label(scope).unwrap());
+             current_device.get_label(scope).unwrap(),
+             new_device.get_label(scope).unwrap());
 }
 
 fn to_string(scope: &utils::Scope) -> String {
