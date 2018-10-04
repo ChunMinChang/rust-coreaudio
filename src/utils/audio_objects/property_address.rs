@@ -55,7 +55,7 @@ pub const DEVICE_NAME_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
         mElement: kAudioObjectPropertyElementMaster,
     };
 
-pub const DEVICE_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
+pub const DEVICES_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
     AudioObjectPropertyAddress {
         mSelector: kAudioHardwarePropertyDevices,
         mScope: kAudioObjectPropertyScopeGlobal,

@@ -21,7 +21,7 @@ use self::property_address::{
     DEVICE_MANUFACTURER_PROPERTY_ADDRESS,
     DEVICE_NAME_PROPERTY_ADDRESS,
     DEVICE_UID_PROPERTY_ADDRESS,
-    DEVICE_PROPERTY_ADDRESS,
+    DEVICES_PROPERTY_ADDRESS,
     INPUT_DEVICE_AVAILABLE_SAMPLE_RATE_PROPERTY_ADDRESS,
     INPUT_DEVICE_BUFFER_FRAME_SIZE_RANGE_PROPERTY_ADDRESS,
     INPUT_DEVICE_LATENCY_PROPERTY_ADDRESS,
@@ -234,7 +234,7 @@ impl AudioSystemObject {
 
     pub fn get_all_devices(&self) -> Result<Vec<AudioObject>, Error> {
         self.get_property_array::<AudioObject>(
-            &DEVICE_PROPERTY_ADDRESS,
+            &DEVICES_PROPERTY_ADDRESS,
         ).map_err(|e| e.into())
     }
 
