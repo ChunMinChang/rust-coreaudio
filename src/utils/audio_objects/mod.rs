@@ -280,6 +280,7 @@ impl GetPropertyArray for AudioSystemObject {}
 #[derive(Clone, Debug, PartialEq)]
 pub struct AudioObject(AudioObjectID);
 
+// TODO: remove or add 'device' for all the function names.
 impl AudioObject {
     pub fn new(id: AudioObjectID) -> Self {
         AudioObject(id)
