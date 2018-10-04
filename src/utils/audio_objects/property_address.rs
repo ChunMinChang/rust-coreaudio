@@ -23,6 +23,15 @@ use self::coreaudio_sys::{
     AudioObjectPropertyAddress,
 };
 
+// TODO: Use function to generate a property address.
+// use super::Scope;
+// fn get_property_address(scope: &Scope) -> AudioObjectPropertyAddress {
+// }
+
+// fn get_global_property_address(...) -> AudioObjectPropertyAddress {
+// }
+
+
 // TODO: Will it be different for input and output?
 pub const DEVICE_UID_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
     AudioObjectPropertyAddress {
