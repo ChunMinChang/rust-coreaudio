@@ -23,17 +23,22 @@ use self::property_address::{
     DEVICE_UID_PROPERTY_ADDRESS,
     DEVICE_PROPERTY_ADDRESS,
     INPUT_DEVICE_AVAILABLE_SAMPLE_RATE_PROPERTY_ADDRESS,
+    INPUT_DEVICE_LATENCY_PROPERTY_ADDRESS,
     INPUT_DEVICE_SAMPLE_RATE_PROPERTY_ADDRESS,
     INPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS,
     INPUT_DEVICE_SOURCE_PROPERTY_ADDRESS,
     INPUT_DEVICE_STREAMS_PROPERTY_ADDRESS,
     INPUT_DEVICE_STREAM_CONFIGURATION_PROPERTY_ADDRESS,
+    INPUT_STREAM_LATENCY_PROPERTY_ADDRESS,
     OUTPUT_DEVICE_AVAILABLE_SAMPLE_RATE_PROPERTY_ADDRESS,
+    OUTPUT_DEVICE_LATENCY_PROPERTY_ADDRESS,
     OUTPUT_DEVICE_SAMPLE_RATE_PROPERTY_ADDRESS,
     OUTPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS,
     OUTPUT_DEVICE_SOURCE_PROPERTY_ADDRESS,
     OUTPUT_DEVICE_STREAMS_PROPERTY_ADDRESS,
-    OUTPUT_DEVICE_STREAM_CONFIGURATION_PROPERTY_ADDRESS};
+    OUTPUT_DEVICE_STREAM_CONFIGURATION_PROPERTY_ADDRESS,
+    OUTPUT_STREAM_LATENCY_PROPERTY_ADDRESS,
+};
 use self::string_wrapper::StringRef;
 
 use std::f64; // For f64::{MAX, MIN}
@@ -357,6 +362,45 @@ impl AudioObject {
         Ok((min, max))
     }
 
+    pub fn get_device_latency(
+        &self,
+        scope: &Scope
+    ) -> Result<u32, Error> {
+        let address: &AudioObjectPropertyAddress = if scope == &Scope::Input {
+            &INPUT_DEVICE_LATENCY_PROPERTY_ADDRESS
+        } else {
+            &OUTPUT_DEVICE_LATENCY_PROPERTY_ADDRESS
+        };
+        self.get_property_data::<u32>(address).map_err(|e| e.into())
+    }
+
+    pub fn get_stream_latency(
+        &self,
+        scope: &Scope
+    ) -> Result<u32, Error> {
+        let address: &AudioObjectPropertyAddress = if scope == &Scope::Input {
+            &INPUT_DEVICE_STREAMS_PROPERTY_ADDRESS
+        } else {
+            &OUTPUT_DEVICE_STREAMS_PROPERTY_ADDRESS
+        };
+
+        let streams: Vec<AudioStream> = self.get_property_array(address)?;
+
+        // There may be several streams on a device. We use the first stream
+        // to get the latency.
+        // TODO: Is it correct?
+        streams[0].get_latency(scope)
+    }
+
+    // TODO: Merge the get_device_latency and get_stream_latency as
+    //       get_hardware_lantency
+    // https://lists.apple.com/archives/coreaudio-api/2017/Jul/msg00035.html
+    // pub fn get_hardware_lantency(
+    //     &self,
+    //     scope: &Scope
+    // ) -> Result<u32, Error> {
+    // }
+
     pub fn get_device_label(
         &self,
         scope: &Scope
@@ -472,7 +516,29 @@ impl GetPropertyArray for AudioObject {}
 
 // AudioStream
 // ============================================================================
-struct AudioStream(AudioStreamID);
+struct AudioStream(AudioStreamID); // AudioStreamID is AudioObjectID
+
+impl AudioStream {
+    fn get_latency(
+        &self,
+        scope: &Scope
+    ) -> Result<u32, Error> {
+        let address: &AudioObjectPropertyAddress = if scope == &Scope::Input {
+            &INPUT_STREAM_LATENCY_PROPERTY_ADDRESS
+        } else {
+            &OUTPUT_STREAM_LATENCY_PROPERTY_ADDRESS
+        };
+        self.get_property_data(address)
+    }
+}
+
+impl GetObjectId for AudioStream {
+    fn get_id(&self) -> AudioObjectID {
+        self.0
+    }
+}
+
+impl GetPropertyData for AudioStream {}
 
 // Utils
 // ============================================================================

@@ -9,6 +9,8 @@ struct DeviceInfo {
     channels: u32,
     rate: f64,
     rate_range: (f64, f64),
+    device_latency: u32,
+    stream_latency: u32,
 }
 
 impl DeviceInfo {
@@ -20,6 +22,8 @@ impl DeviceInfo {
         channels: u32,
         rate: f64,
         rate_range: (f64, f64),
+        device_latency: u32,
+        stream_latency: u32,
     ) -> Self {
         DeviceInfo {
             id,
@@ -29,6 +33,8 @@ impl DeviceInfo {
             channels,
             rate,
             rate_range,
+            device_latency,
+            stream_latency,
         }
     }
 }
@@ -73,6 +79,8 @@ fn get_device_info(
         device.get_channel_count(scope).unwrap(),
         device.get_default_rate(scope).unwrap(),
         device.get_rate_range(scope).unwrap(),
+        device.get_device_latency(scope).unwrap(),
+        device.get_stream_latency(scope).unwrap(),
     ))
 }
 
@@ -83,6 +91,8 @@ fn print_device_info(info: &DeviceInfo) {
     println!("\tchannels: {}", info.channels);
     println!("\trate: {}", info.rate);
     println!("\trate range: {} - {}", info.rate_range.0, info.rate_range.1);
+    println!("\tdevice latency: {}", info.device_latency);
+    println!("\tstream latency: {}", info.stream_latency);
 }
 
 fn print_demarcation(scope: &utils::Scope) {

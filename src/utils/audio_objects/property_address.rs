@@ -4,6 +4,7 @@ use self::coreaudio_sys::{
     kAudioDevicePropertyAvailableNominalSampleRates,
     kAudioDevicePropertyDeviceUID,
     kAudioDevicePropertyNominalSampleRate,
+    kAudioDevicePropertyLatency,
     kAudioObjectPropertyManufacturer,
     kAudioObjectPropertyName,
     kAudioHardwarePropertyDevices,
@@ -17,6 +18,7 @@ use self::coreaudio_sys::{
     kAudioObjectPropertyScopeOutput,
     kAudioObjectPropertyScopeGlobal,
     kAudioObjectPropertyElementMaster,
+    kAudioStreamPropertyLatency,
     AudioObjectPropertyAddress,
 };
 
@@ -148,6 +150,34 @@ pub const INPUT_DEVICE_AVAILABLE_SAMPLE_RATE_PROPERTY_ADDRESS: AudioObjectProper
 pub const OUTPUT_DEVICE_AVAILABLE_SAMPLE_RATE_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
     AudioObjectPropertyAddress {
         mSelector: kAudioDevicePropertyAvailableNominalSampleRates,
+        mScope: kAudioObjectPropertyScopeOutput,
+        mElement: kAudioObjectPropertyElementMaster,
+    };
+
+pub const INPUT_DEVICE_LATENCY_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
+    AudioObjectPropertyAddress {
+        mSelector: kAudioDevicePropertyLatency,
+        mScope: kAudioObjectPropertyScopeInput,
+        mElement: kAudioObjectPropertyElementMaster,
+    };
+
+pub const OUTPUT_DEVICE_LATENCY_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
+    AudioObjectPropertyAddress {
+        mSelector: kAudioDevicePropertyLatency,
+        mScope: kAudioObjectPropertyScopeOutput,
+        mElement: kAudioObjectPropertyElementMaster,
+    };
+
+pub const INPUT_STREAM_LATENCY_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
+    AudioObjectPropertyAddress {
+        mSelector: kAudioStreamPropertyLatency,
+        mScope: kAudioObjectPropertyScopeInput,
+        mElement: kAudioObjectPropertyElementMaster,
+    };
+
+pub const OUTPUT_STREAM_LATENCY_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
+    AudioObjectPropertyAddress {
+        mSelector: kAudioStreamPropertyLatency,
         mScope: kAudioObjectPropertyScopeOutput,
         mElement: kAudioObjectPropertyElementMaster,
     };
