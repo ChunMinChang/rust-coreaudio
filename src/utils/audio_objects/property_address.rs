@@ -3,205 +3,92 @@ extern crate coreaudio_sys;
 use self::coreaudio_sys::{
     kAudioDevicePropertyAvailableNominalSampleRates,
     kAudioDevicePropertyBufferFrameSizeRange,
-    kAudioDevicePropertyDeviceUID,
-    kAudioDevicePropertyNominalSampleRate,
-    kAudioDevicePropertyLatency,
-    kAudioObjectPropertyManufacturer,
-    kAudioObjectPropertyName,
-    kAudioHardwarePropertyDevices,
-    kAudioHardwarePropertyDefaultInputDevice,
-    kAudioHardwarePropertyDefaultOutputDevice,
-    kAudioDevicePropertyStreamConfiguration,
-    kAudioDevicePropertyStreams,
     kAudioDevicePropertyDataSource,
     kAudioDevicePropertyDataSourceNameForIDCFString,
-    kAudioObjectPropertyScopeInput,
-    kAudioObjectPropertyScopeOutput,
-    kAudioObjectPropertyScopeGlobal,
-    kAudioObjectPropertyElementMaster,
+    kAudioDevicePropertyDeviceUID,
+    kAudioDevicePropertyLatency,
+    kAudioDevicePropertyNominalSampleRate,
+    kAudioDevicePropertyStreamConfiguration,
+    kAudioDevicePropertyStreams,
+    kAudioHardwarePropertyDefaultInputDevice,
+    kAudioHardwarePropertyDefaultOutputDevice,
+    kAudioHardwarePropertyDevices,
+    kAudioObjectPropertyManufacturer,
+    kAudioObjectPropertyName,
     kAudioStreamPropertyLatency,
     AudioObjectPropertyAddress,
+    AudioObjectPropertySelector,
+    kAudioObjectPropertyElementMaster,
+    kAudioObjectPropertyScopeGlobal,
+    kAudioObjectPropertyScopeInput,
+    kAudioObjectPropertyScopeOutput,
 };
 
-// TODO: Use function to generate a property address.
-// use super::Scope;
-// fn get_property_address(scope: &Scope) -> AudioObjectPropertyAddress {
-// }
+use super::Scope;
 
-// fn get_global_property_address(...) -> AudioObjectPropertyAddress {
-// }
+pub enum Property {
+    DefaultInputDevice,
+    DefaultOutputDevice,
+    DeviceBufferFrameSizeRange,
+    DeviceLatency,
+    DeviceManufacturer,
+    DeviceName,
+    DeviceRate,
+    DeviceRateRange,
+    DeviceSource,
+    DeviceSourceName,
+    DeviceStreams,
+    DeviceUID,
+    Devices,
+    StreamConfiguration,
+    StreamLatency,
+}
 
+impl From<Property> for AudioObjectPropertySelector {
+    fn from(p: Property) -> Self {
+        match p {
+            Property::DefaultInputDevice => kAudioHardwarePropertyDefaultInputDevice,
+            Property::DefaultOutputDevice => kAudioHardwarePropertyDefaultOutputDevice,
+            Property::DeviceBufferFrameSizeRange => kAudioDevicePropertyBufferFrameSizeRange,
+            Property::DeviceLatency => kAudioDevicePropertyLatency,
+            Property::DeviceManufacturer => kAudioObjectPropertyManufacturer,
+            Property::DeviceName => kAudioObjectPropertyName,
+            Property::DeviceRate => kAudioDevicePropertyNominalSampleRate,
+            Property::DeviceRateRange => kAudioDevicePropertyAvailableNominalSampleRates,
+            Property::DeviceSource => kAudioDevicePropertyDataSource,
+            Property::DeviceSourceName => kAudioDevicePropertyDataSourceNameForIDCFString,
+            Property::DeviceStreams => kAudioDevicePropertyStreams,
+            Property::DeviceUID => kAudioDevicePropertyDeviceUID,
+            Property::Devices => kAudioHardwarePropertyDevices,
+            Property::StreamConfiguration => kAudioDevicePropertyStreamConfiguration,
+            Property::StreamLatency => kAudioStreamPropertyLatency,
+        }
+    }
+}
 
-// TODO: Will it be different for input and output?
-pub const DEVICE_UID_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
+pub fn get_scope_property_address(
+    scope: &Scope,
+    p: Property
+) -> AudioObjectPropertyAddress {
+    let scope = if scope == &Scope::Input {
+        kAudioObjectPropertyScopeInput
+    } else {
+        kAudioObjectPropertyScopeOutput
+    };
+
     AudioObjectPropertyAddress {
-        mSelector: kAudioDevicePropertyDeviceUID,
+        mSelector: p.into(),
+        mScope: scope,
+        mElement: kAudioObjectPropertyElementMaster,
+    }
+}
+
+pub fn get_global_property_address(
+    p: Property
+) -> AudioObjectPropertyAddress {
+    AudioObjectPropertyAddress {
+        mSelector: p.into(),
         mScope: kAudioObjectPropertyScopeGlobal,
         mElement: kAudioObjectPropertyElementMaster,
-    };
-
-// TODO: Will it be different for input and output?
-pub const DEVICE_MANUFACTURER_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
-    AudioObjectPropertyAddress {
-        mSelector: kAudioObjectPropertyManufacturer,
-        mScope: kAudioObjectPropertyScopeGlobal,
-        mElement: kAudioObjectPropertyElementMaster,
-    };
-
-pub const DEVICE_NAME_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
-    AudioObjectPropertyAddress {
-        mSelector: kAudioObjectPropertyName,
-        mScope: kAudioObjectPropertyScopeGlobal,
-        mElement: kAudioObjectPropertyElementMaster,
-    };
-
-pub const DEVICES_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
-    AudioObjectPropertyAddress {
-        mSelector: kAudioHardwarePropertyDevices,
-        mScope: kAudioObjectPropertyScopeGlobal,
-        mElement: kAudioObjectPropertyElementMaster,
-    };
-
-pub const DEFAULT_INPUT_DEVICE_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
-    AudioObjectPropertyAddress {
-        mSelector: kAudioHardwarePropertyDefaultInputDevice,
-        mScope: kAudioObjectPropertyScopeGlobal,
-        mElement: kAudioObjectPropertyElementMaster,
-    };
-
-pub const DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
-    AudioObjectPropertyAddress {
-        mSelector: kAudioHardwarePropertyDefaultOutputDevice,
-        mScope: kAudioObjectPropertyScopeGlobal,
-        mElement: kAudioObjectPropertyElementMaster,
-    };
-
-pub const INPUT_DEVICE_STREAM_CONFIGURATION_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
-    AudioObjectPropertyAddress {
-      mSelector: kAudioDevicePropertyStreamConfiguration,
-      mScope: kAudioObjectPropertyScopeInput,
-      mElement: kAudioObjectPropertyElementMaster,
-    };
-
-pub const OUTPUT_DEVICE_STREAM_CONFIGURATION_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
-    AudioObjectPropertyAddress {
-      mSelector: kAudioDevicePropertyStreamConfiguration,
-      mScope: kAudioObjectPropertyScopeOutput,
-      mElement: kAudioObjectPropertyElementMaster,
-    };
-
-pub const INPUT_DEVICE_STREAMS_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
-    AudioObjectPropertyAddress {
-        mSelector: kAudioDevicePropertyStreams,
-        mScope: kAudioObjectPropertyScopeInput,
-        mElement: kAudioObjectPropertyElementMaster,
-    };
-
-pub const OUTPUT_DEVICE_STREAMS_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
-    AudioObjectPropertyAddress {
-        mSelector: kAudioDevicePropertyStreams,
-        mScope: kAudioObjectPropertyScopeOutput,
-        mElement: kAudioObjectPropertyElementMaster,
-    };
-
-pub const INPUT_DEVICE_SOURCE_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
-    AudioObjectPropertyAddress {
-        mSelector: kAudioDevicePropertyDataSource,
-        mScope: kAudioObjectPropertyScopeInput,
-        mElement: kAudioObjectPropertyElementMaster,
-    };
-
-pub const OUTPUT_DEVICE_SOURCE_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
-    AudioObjectPropertyAddress {
-        mSelector: kAudioDevicePropertyDataSource,
-        mScope: kAudioObjectPropertyScopeOutput,
-        mElement: kAudioObjectPropertyElementMaster,
-    };
-
-pub const INPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
-    AudioObjectPropertyAddress {
-        mSelector: kAudioDevicePropertyDataSourceNameForIDCFString,
-        mScope: kAudioObjectPropertyScopeInput,
-        mElement: kAudioObjectPropertyElementMaster,
-    };
-
-pub const OUTPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
-    AudioObjectPropertyAddress {
-        mSelector: kAudioDevicePropertyDataSourceNameForIDCFString,
-        mScope: kAudioObjectPropertyScopeOutput,
-        mElement: kAudioObjectPropertyElementMaster,
-    };
-
-// TODO: Will it be different from output's one?
-pub const INPUT_DEVICE_SAMPLE_RATE_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
-    AudioObjectPropertyAddress {
-        mSelector: kAudioDevicePropertyNominalSampleRate,
-        mScope: kAudioObjectPropertyScopeInput,
-        mElement: kAudioObjectPropertyElementMaster,
-    };
-
-// TODO: Will it be different from input's one?
-pub const OUTPUT_DEVICE_SAMPLE_RATE_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
-    AudioObjectPropertyAddress {
-        mSelector: kAudioDevicePropertyNominalSampleRate,
-        mScope: kAudioObjectPropertyScopeOutput,
-        mElement: kAudioObjectPropertyElementMaster,
-    };
-
-// TODO: Will it be different from output's one?
-pub const INPUT_DEVICE_AVAILABLE_SAMPLE_RATE_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
-    AudioObjectPropertyAddress {
-        mSelector: kAudioDevicePropertyAvailableNominalSampleRates,
-        mScope: kAudioObjectPropertyScopeInput,
-        mElement: kAudioObjectPropertyElementMaster,
-    };
-
-// TODO: Will it be different from input's one?
-pub const OUTPUT_DEVICE_AVAILABLE_SAMPLE_RATE_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
-    AudioObjectPropertyAddress {
-        mSelector: kAudioDevicePropertyAvailableNominalSampleRates,
-        mScope: kAudioObjectPropertyScopeOutput,
-        mElement: kAudioObjectPropertyElementMaster,
-    };
-
-pub const INPUT_DEVICE_LATENCY_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
-    AudioObjectPropertyAddress {
-        mSelector: kAudioDevicePropertyLatency,
-        mScope: kAudioObjectPropertyScopeInput,
-        mElement: kAudioObjectPropertyElementMaster,
-    };
-
-pub const OUTPUT_DEVICE_LATENCY_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
-    AudioObjectPropertyAddress {
-        mSelector: kAudioDevicePropertyLatency,
-        mScope: kAudioObjectPropertyScopeOutput,
-        mElement: kAudioObjectPropertyElementMaster,
-    };
-
-pub const INPUT_DEVICE_BUFFER_FRAME_SIZE_RANGE_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
-    AudioObjectPropertyAddress {
-        mSelector: kAudioDevicePropertyBufferFrameSizeRange,
-        mScope: kAudioObjectPropertyScopeInput,
-        mElement: kAudioObjectPropertyElementMaster,
-    };
-
-pub const OUTPUT_DEVICE_BUFFER_FRAME_SIZE_RANGE_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
-    AudioObjectPropertyAddress {
-        mSelector: kAudioDevicePropertyBufferFrameSizeRange,
-        mScope: kAudioObjectPropertyScopeInput,
-        mElement: kAudioObjectPropertyElementMaster,
-    };
-
-pub const INPUT_STREAM_LATENCY_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
-    AudioObjectPropertyAddress {
-        mSelector: kAudioStreamPropertyLatency,
-        mScope: kAudioObjectPropertyScopeInput,
-        mElement: kAudioObjectPropertyElementMaster,
-    };
-
-pub const OUTPUT_STREAM_LATENCY_PROPERTY_ADDRESS: AudioObjectPropertyAddress =
-    AudioObjectPropertyAddress {
-        mSelector: kAudioStreamPropertyLatency,
-        mScope: kAudioObjectPropertyScopeOutput,
-        mElement: kAudioObjectPropertyElementMaster,
-    };
+    }
+}

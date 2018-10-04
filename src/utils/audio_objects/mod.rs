@@ -10,36 +10,15 @@ use self::coreaudio_sys::{
     AudioObjectPropertyAddress,
     AudioObjectID,
     AudioValueRange,
+    AudioValueTranslation,
     kAudioObjectSystemObject,   // AudioObjectID
     kAudioObjectUnknown,        // AudioObjectID
     AudioStreamID,              // AudioObjectID
-    AudioValueTranslation,
 };
 use self::property_address::{
-    DEFAULT_INPUT_DEVICE_PROPERTY_ADDRESS,
-    DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS,
-    DEVICE_MANUFACTURER_PROPERTY_ADDRESS,
-    DEVICE_NAME_PROPERTY_ADDRESS,
-    DEVICE_UID_PROPERTY_ADDRESS,
-    DEVICES_PROPERTY_ADDRESS,
-    INPUT_DEVICE_AVAILABLE_SAMPLE_RATE_PROPERTY_ADDRESS,
-    INPUT_DEVICE_BUFFER_FRAME_SIZE_RANGE_PROPERTY_ADDRESS,
-    INPUT_DEVICE_LATENCY_PROPERTY_ADDRESS,
-    INPUT_DEVICE_SAMPLE_RATE_PROPERTY_ADDRESS,
-    INPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS,
-    INPUT_DEVICE_SOURCE_PROPERTY_ADDRESS,
-    INPUT_DEVICE_STREAMS_PROPERTY_ADDRESS,
-    INPUT_DEVICE_STREAM_CONFIGURATION_PROPERTY_ADDRESS,
-    INPUT_STREAM_LATENCY_PROPERTY_ADDRESS,
-    OUTPUT_DEVICE_AVAILABLE_SAMPLE_RATE_PROPERTY_ADDRESS,
-    OUTPUT_DEVICE_BUFFER_FRAME_SIZE_RANGE_PROPERTY_ADDRESS,
-    OUTPUT_DEVICE_LATENCY_PROPERTY_ADDRESS,
-    OUTPUT_DEVICE_SAMPLE_RATE_PROPERTY_ADDRESS,
-    OUTPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS,
-    OUTPUT_DEVICE_SOURCE_PROPERTY_ADDRESS,
-    OUTPUT_DEVICE_STREAMS_PROPERTY_ADDRESS,
-    OUTPUT_DEVICE_STREAM_CONFIGURATION_PROPERTY_ADDRESS,
-    OUTPUT_STREAM_LATENCY_PROPERTY_ADDRESS,
+    get_global_property_address,
+    get_scope_property_address,
+    Property,
 };
 use self::string_wrapper::StringRef;
 
@@ -203,12 +182,16 @@ impl AudioSystemObject {
         &self,
         scope: &Scope
     ) -> Result<AudioObject, Error> {
-        let address: &AudioObjectPropertyAddress = if scope == &Scope::Input {
-            &DEFAULT_INPUT_DEVICE_PROPERTY_ADDRESS
-        } else {
-            &DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS
-        };
-        let device: AudioObject = self.get_property_data(address)?;
+        let address = get_global_property_address(
+            if scope == &Scope::Input {
+                Property::DefaultInputDevice
+            } else {
+                Property::DefaultOutputDevice
+            }
+        );
+
+        let device: AudioObject = self.get_property_data(&address)?;
+
         // We will get an unknow device when there is no available device at
         // this time
         if device.is_valid() {
@@ -233,8 +216,9 @@ impl AudioSystemObject {
     }
 
     pub fn get_all_devices(&self) -> Result<Vec<AudioObject>, Error> {
+        let address = get_global_property_address(Property::Devices);
         self.get_property_array::<AudioObject>(
-            &DEVICES_PROPERTY_ADDRESS,
+            &address,
         ).map_err(|e| e.into())
     }
 
@@ -258,12 +242,15 @@ impl AudioSystemObject {
             return Err(Error::SetSameDevice);
         }
 
-        let address: &AudioObjectPropertyAddress = if scope == &Scope::Input {
-            &DEFAULT_INPUT_DEVICE_PROPERTY_ADDRESS
-        } else {
-            &DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS
-        };
-        self.set_property_data(address, device.into()).map_err(|e| e.into())
+        let address = get_global_property_address(
+            if scope == &Scope::Input {
+                Property::DefaultInputDevice
+            } else {
+                Property::DefaultOutputDevice
+            }
+        );
+
+        self.set_property_data(&address, device.into()).map_err(|e| e.into())
     }
 }
 
@@ -296,15 +283,14 @@ impl AudioObject {
         &self,
         scope: &Scope
     ) -> Result<u32, Error> {
-        let address: &AudioObjectPropertyAddress = if scope == &Scope::Input {
-            &INPUT_DEVICE_STREAM_CONFIGURATION_PROPERTY_ADDRESS
-        } else {
-            &OUTPUT_DEVICE_STREAM_CONFIGURATION_PROPERTY_ADDRESS
-        };
+        let address = get_scope_property_address(
+            scope,
+            Property::StreamConfiguration
+        );
         // Calculate number of channels by the AudioBufferList.
         // The mNumberBuffers is the number of interleaved channels in the buffer.
         // The buffer is noninterleaved if mNumberBuffers is 1.
-        let list: &AudioBufferList = self.get_property_variable_sized_data(address)?;
+        let list: &AudioBufferList = self.get_property_variable_sized_data(&address)?;
         let buffers = unsafe {
             let ptr = list.mBuffers.as_ptr() as *mut AudioBuffer;
             let len = list.mNumberBuffers as usize; // interleaved channels.
@@ -319,14 +305,16 @@ impl AudioObject {
     }
 
     pub fn get_uid(&self) -> Result<String, Error> {
+        let address = get_global_property_address(Property::DeviceUID);
         let uid: StringRef =
-            self.get_property_data(&DEVICE_UID_PROPERTY_ADDRESS)?;
+            self.get_property_data(&address)?;
         uid.into_string().map_err(Error::ConversionFailed)
     }
 
     pub fn get_manufacturer(&self) -> Result<String, Error> {
+        let address = get_global_property_address(Property::DeviceManufacturer);
         let manufacturer: StringRef =
-            self.get_property_data(&DEVICE_MANUFACTURER_PROPERTY_ADDRESS)?;
+            self.get_property_data(&address)?;
         manufacturer.into_string().map_err(Error::ConversionFailed)
     }
 
@@ -334,25 +322,23 @@ impl AudioObject {
         &self,
         scope: &Scope
     ) -> Result<f64, Error> {
-        let address: &AudioObjectPropertyAddress = if scope == &Scope::Input {
-            &INPUT_DEVICE_SAMPLE_RATE_PROPERTY_ADDRESS
-        } else {
-            &OUTPUT_DEVICE_SAMPLE_RATE_PROPERTY_ADDRESS
-        };
-        self.get_property_data::<f64>(address).map_err(|e| e.into())
+        let address = get_scope_property_address(
+            scope,
+            Property::DeviceRate
+        );
+        self.get_property_data::<f64>(&address).map_err(|e| e.into())
     }
 
     pub fn get_rate_range(
         &self,
         scope: &Scope
     ) -> Result<(f64, f64), Error> {
-        let address: &AudioObjectPropertyAddress = if scope == &Scope::Input {
-            &INPUT_DEVICE_AVAILABLE_SAMPLE_RATE_PROPERTY_ADDRESS
-        } else {
-            &OUTPUT_DEVICE_AVAILABLE_SAMPLE_RATE_PROPERTY_ADDRESS
-        };
+        let address = get_scope_property_address(
+            scope,
+            Property::DeviceRateRange
+        );
 
-        let ranges: Vec<AudioValueRange> = self.get_property_array(address)?;
+        let ranges: Vec<AudioValueRange> = self.get_property_array(&address)?;
 
         let mut max = f64::MIN;
         let mut min = f64::MAX;
@@ -369,25 +355,23 @@ impl AudioObject {
         &self,
         scope: &Scope
     ) -> Result<u32, Error> {
-        let address: &AudioObjectPropertyAddress = if scope == &Scope::Input {
-            &INPUT_DEVICE_LATENCY_PROPERTY_ADDRESS
-        } else {
-            &OUTPUT_DEVICE_LATENCY_PROPERTY_ADDRESS
-        };
-        self.get_property_data::<u32>(address).map_err(|e| e.into())
+        let address = get_scope_property_address(
+            scope,
+            Property::DeviceLatency
+        );
+        self.get_property_data::<u32>(&address).map_err(|e| e.into())
     }
 
     pub fn get_stream_latency(
         &self,
         scope: &Scope
     ) -> Result<u32, Error> {
-        let address: &AudioObjectPropertyAddress = if scope == &Scope::Input {
-            &INPUT_DEVICE_STREAMS_PROPERTY_ADDRESS
-        } else {
-            &OUTPUT_DEVICE_STREAMS_PROPERTY_ADDRESS
-        };
+        let address = get_scope_property_address(
+            scope,
+            Property::DeviceStreams
+        );
 
-        let streams: Vec<AudioStream> = self.get_property_array(address)?;
+        let streams: Vec<AudioStream> = self.get_property_array(&address)?;
 
         // There may be several streams on a device. We use the first stream
         // to get the latency.
@@ -408,12 +392,12 @@ impl AudioObject {
         &self,
         scope: &Scope
     ) -> Result<(f64, f64), Error> {
-        let address: &AudioObjectPropertyAddress = if scope == &Scope::Input {
-            &INPUT_DEVICE_BUFFER_FRAME_SIZE_RANGE_PROPERTY_ADDRESS
-        } else {
-            &OUTPUT_DEVICE_BUFFER_FRAME_SIZE_RANGE_PROPERTY_ADDRESS
-        };
-        let range: AudioValueRange = self.get_property_data(address)?;
+        let address = get_scope_property_address(
+            scope,
+            Property::DeviceBufferFrameSizeRange
+        );
+
+        let range: AudioValueRange = self.get_property_data(&address)?;
         Ok((range.mMinimum, range.mMaximum))
     }
 
@@ -437,8 +421,9 @@ impl AudioObject {
         // If the calling fails, the StringRef::drop() will be called but
         // nothing will be released since StringRef::Default::default() is a
         // null string.
+        let property_address = get_global_property_address(Property::DeviceName);
         let name: StringRef =
-            self.get_property_data(&DEVICE_NAME_PROPERTY_ADDRESS)?;
+            self.get_property_data(&property_address)?;
         name.into_string().map_err(Error::ConversionFailed)
     }
 
@@ -456,13 +441,12 @@ impl AudioObject {
             mOutputDataSize: mem::size_of::<StringRef>() as u32,
         };
 
-        let address: &AudioObjectPropertyAddress = if scope == &Scope::Input {
-            &INPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS
-        } else {
-            &OUTPUT_DEVICE_SOURCE_NAME_PROPERTY_ADDRESS
-        };
+        let address = get_scope_property_address(
+            scope,
+            Property::DeviceSourceName
+        );
 
-        self.get_property_data_with_ptr(address, &mut translation)?;
+        self.get_property_data_with_ptr(&address, &mut translation)?;
         name.into_string().map_err(Error::ConversionFailed)
     }
 
@@ -474,12 +458,12 @@ impl AudioObject {
             return Err(Error::WrongScope);
         }
 
-        let address: &AudioObjectPropertyAddress = if scope == &Scope::Input {
-            &INPUT_DEVICE_SOURCE_PROPERTY_ADDRESS
-        } else {
-            &OUTPUT_DEVICE_SOURCE_PROPERTY_ADDRESS
-        };
-        self.get_property_data::<u32>(address).map_err(|e| e.into())
+        let address = get_scope_property_address(
+            scope,
+            Property::DeviceSource
+        );
+
+        self.get_property_data::<u32>(&address).map_err(|e| e.into())
     }
 
     pub fn in_scope(
@@ -494,12 +478,11 @@ impl AudioObject {
         &self,
         scope: &Scope
     ) -> Result<usize, Error> {
-        let address: &AudioObjectPropertyAddress = if scope == &Scope::Input {
-            &INPUT_DEVICE_STREAMS_PROPERTY_ADDRESS
-        } else {
-            &OUTPUT_DEVICE_STREAMS_PROPERTY_ADDRESS
-        };
-        let size = self.get_property_data_size(address)?;
+        let address = get_scope_property_address(
+            scope,
+            Property::DeviceStreams
+        );
+        let size = self.get_property_data_size(&address)?;
         Ok(size / mem::size_of::<AudioStream>())
     }
 }
@@ -539,12 +522,11 @@ impl AudioStream {
         &self,
         scope: &Scope
     ) -> Result<u32, Error> {
-        let address: &AudioObjectPropertyAddress = if scope == &Scope::Input {
-            &INPUT_STREAM_LATENCY_PROPERTY_ADDRESS
-        } else {
-            &OUTPUT_STREAM_LATENCY_PROPERTY_ADDRESS
-        };
-        self.get_property_data(address)
+        let address = get_scope_property_address(
+            scope,
+            Property::StreamLatency
+        );
+        self.get_property_data(&address)
     }
 }
 
