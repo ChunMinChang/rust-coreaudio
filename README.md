@@ -1,11 +1,18 @@
-# Rust CoreAudio Draft
+# Rust CoreAudio
 
 This is a draft to play CoreAudio APIs in *Rust*. The aim for this project is to
 1. practice *Rust*
-2. get familiar with integrating *C* APIs into *Rust*
+2. get familiar with calling *C* APIs in *Rust*
 3. find a way to make unsafe block safer
-4. catch problems in the implementation that is written with *C/C++* style
-5. test the APIs we implemented in parallel threads, by running ```cargo tests```
+4. test the APIs in parallel threads, by running ```cargo tests```
+5. get ideas about how to design interfaces for an audio library
+
+## How to run
+Make sure *Rust* and *Cargo* are installed.
+- build progect: ```$ cargo build```
+- Examples
+  - Play sine wave: ```$ cargo run --example sine```
+  - Show devices info: ```$ cargo run --example devices```
 
 ## TO-DO
 - Use **single-element** (tuple) struct to wrap all native types(e.g., ```CFStringRef```, ```AudioObjectID```).
