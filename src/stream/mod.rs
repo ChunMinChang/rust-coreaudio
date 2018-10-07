@@ -16,7 +16,7 @@ pub enum Error {
 
 // To convert a audio_unit::Error to a Error.
 impl From<audio_unit::Error> for Error {
-    fn from(e: audio_unit::Error) -> Error {
+    fn from(e: audio_unit::Error) -> Self {
         Error::AudioUnit(e)
     }
 }
@@ -52,7 +52,7 @@ struct Parameters {
     rate: f64,
 }
 impl Parameters {
-    fn new(channels: u32, format: Format, rate: f64) -> Parameters {
+    fn new(channels: u32, format: Format, rate: f64) -> Self {
         Parameters {
             channels,
             format,

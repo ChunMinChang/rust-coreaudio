@@ -22,7 +22,7 @@ pub enum Error {
 
 // To convert an string_wrapper::Error to a Error.
 impl From<Utf8Error> for Error {
-    fn from(e: Utf8Error) -> Error {
+    fn from(e: Utf8Error) -> Self {
         Error::Utf8(e)
     }
 }

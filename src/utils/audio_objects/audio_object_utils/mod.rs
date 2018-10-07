@@ -33,7 +33,7 @@ pub enum Error {
 }
 
 impl From<sys::OSStatus> for Error {
-    fn from(status: sys::OSStatus) -> Error {
+    fn from(status: sys::OSStatus) -> Self {
         type BindgenOsstatusError = u32;
         fn to_bindgen_type(status: sys::OSStatus) -> BindgenOsstatusError {
             status as BindgenOsstatusError

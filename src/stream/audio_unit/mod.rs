@@ -15,7 +15,7 @@ pub enum Error {
 }
 
 impl From<sys::OSStatus> for Error {
-    fn from(status: sys::OSStatus) -> Error {
+    fn from(status: sys::OSStatus) -> Self {
         match status {
             -3000 => Error::InvalidComponentID, // https://developer.apple.com/documentation/coreservices/1559940-anonymous/invalidcomponentid?language=objc
             sys::kAudioUnitErr_PropertyNotWritable => Error::PropertyNotWritable,

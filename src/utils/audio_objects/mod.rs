@@ -440,7 +440,7 @@ impl AudioObject {
         let mut source: u32 = self.get_source(scope)?;
         let mut name: StringRef = StringRef::default(); // Create a null string.
 
-        let mut translation: AudioValueTranslation = AudioValueTranslation {
+        let mut translation = AudioValueTranslation {
             mInputData: &mut source as *mut u32 as *mut c_void,
             mInputDataSize: mem::size_of::<u32>() as u32,
             mOutputData: &mut name as *mut StringRef as *mut c_void,
