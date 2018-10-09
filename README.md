@@ -24,7 +24,16 @@ Make sure *Rust* and *Cargo* are installed.
   - Unit test for *audio_unit* and *stream* modules.
   - Integration test for using *stream* and *utils(devices)* at the same time.
 
+## References
+- [RustAudio/coreaudio-rs][RustAudio-coreaudio-rs]
+- [djg/core-audio-rs][djg-core-audio-rs]
+- [cubeb-coreaudio-rs][cubeb-coreaudio-rs]
+
 [gist-string-wrapper]: https://gist.github.com/ChunMinChang/25f3608c285f1abf2a5c289d5f758427 "Using tuple struct to wrap native C types"
 [gist-same-size]: https://gist.github.com/ChunMinChang/1acf672babd4e8f79fcf83fa228d1461 "Wrap native types by tuple struct"
 [gist-audioobject]: https://gist.github.com/ChunMinChang/07b806cb6a9ea1136cb3cbd8cda6c806 "Access data from CoreAudio APIs with a single-element tuple structs wrapping native CoreAudio types"
 [gist-callback]: https://gist.github.com/ChunMinChang/8a22f8a1308b6e0a600e22c4629b2175 "Convert a void* buffer (from C) to a typed slice"
+
+[cubeb-coreaudio-rs]: https://github.com/ChunMinChang/cubeb-coreaudio-rs "C-style Rust code for audiounit backend"
+[RustAudio-coreaudio-rs]: https://github.com/RustAudio/coreaudio-rs "RustAudio/coreaudio-rs"
+[djg-core-audio-rs]: https://github.com/djg/core-audio-rs "djg/core-audio-rs"
