@@ -261,7 +261,9 @@ extern "C" fn audio_unit_render_callback<R>(
     in_bus_number: sys::UInt32,
     in_number_of_frames: sys::UInt32,
     io_data: *mut sys::AudioBufferList,
-) -> sys::OSStatus where R: RenderCallback {
+) -> sys::OSStatus
+    where R: RenderCallback
+{
     let render_callback_object = in_ref_con as *mut R;
     unsafe {
         (*render_callback_object).render(
