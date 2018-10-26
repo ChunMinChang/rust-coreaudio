@@ -26,6 +26,9 @@ Make sure *Rust* and *Cargo* are installed.
 
 ## References
 - [RustAudio/coreaudio-rs][RustAudio-coreaudio-rs]
+  - [Doc][RustAudio-coreaudio-rs-doc]
+- [RustAudio/coreaudio-sys][RustAudio-coreaudio-sys]
+  - [Doc][RustAudio-coreaudio-sys-doc]
 - [djg/core-audio-rs][djg-core-audio-rs]
 - [cubeb-coreaudio-rs][cubeb-coreaudio-rs]
 
@@ -34,6 +37,9 @@ Make sure *Rust* and *Cargo* are installed.
 [gist-audioobject]: https://gist.github.com/ChunMinChang/07b806cb6a9ea1136cb3cbd8cda6c806 "Access data from CoreAudio APIs with a single-element tuple structs wrapping native CoreAudio types"
 [gist-callback]: https://gist.github.com/ChunMinChang/8a22f8a1308b6e0a600e22c4629b2175 "Convert a void* buffer (from C) to a typed slice"
 
-[cubeb-coreaudio-rs]: https://github.com/ChunMinChang/cubeb-coreaudio-rs "C-style Rust code for audiounit backend"
 [RustAudio-coreaudio-rs]: https://github.com/RustAudio/coreaudio-rs "RustAudio/coreaudio-rs"
+[RustAudio-coreaudio-rs-doc]: http://rustaudio.github.io/coreaudio-rs/coreaudio/index.html "Doc: RustAudio/coreaudio-rs"
+[RustAudio-coreaudio-sys]: https://github.com/RustAudio/coreaudio-sys "RustAudio/coreaudio-sys"
+[RustAudio-coreaudio-sys-doc]: http://rustaudio.github.io/coreaudio-rs/coreaudio_sys/index.html "Doc: RustAudio/coreaudio-sys"
 [djg-core-audio-rs]: https://github.com/djg/core-audio-rs "djg/core-audio-rs"
+[cubeb-coreaudio-rs]: https://github.com/ChunMinChang/cubeb-coreaudio-rs "C-style Rust code for audiounit backend"
