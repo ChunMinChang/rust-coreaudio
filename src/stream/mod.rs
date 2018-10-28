@@ -168,9 +168,12 @@ impl<T> Stream<T> {
         Ok(())
     }
 
+    // Reference:
+    // https://developer.apple.com/documentation/audiotoolbox/aurendercallbackstruct?language=objc
+    // https://developer.apple.com/documentation/audiotoolbox/aurendercallback?language=objc
     fn set_callback(&mut self) -> Result<(), Error> {
         let callback_struct = sys::AURenderCallbackStruct {
-            inputProc: Some(audio_unit_callback::<Self>),
+            inputProc: Some(Self::audio_unit_callback),
             inputProcRefCon: self as *mut Self as *mut c_void,
         };
 
@@ -183,46 +186,6 @@ impl<T> Stream<T> {
         Ok(())
     }
 
-    fn get_buffer_data (&self, data: AudioData<T>) -> sys::OSStatus {
-        let mut channel_buffers = Vec::new();
-        assert_eq!(data.buffers.len() as u32, self.parameters.channels);
-        for buffer in data.buffers {
-            assert_eq!(buffer.mNumberChannels, 1);
-            assert_eq!(
-                (data.frames * size_of::<T>()) as u32,
-                buffer.mDataByteSize
-            );
-            let ptr = buffer.mData as *mut T;
-            let len = data.frames;
-            let channel_buffer = unsafe { slice::from_raw_parts_mut(ptr, len) };
-            channel_buffers.push(channel_buffer);
-        }
-        (self.callback)(&mut channel_buffers);
-        sys::noErr as sys::OSStatus
-    }
-}
-
-impl<T> Drop for Stream<T> {
-    fn drop(&mut self) {
-        assert!(self.stop().is_ok());
-        assert!(self.uninit_unit().is_ok());
-    }
-}
-
-// This trait will be used when
-// https://developer.apple.com/documentation/audiotoolbox/aurendercallback?language=objc
-trait CallbackRender {
-    fn render(
-        &self,
-        io_action_flags: *mut sys::AudioUnitRenderActionFlags,
-        in_time_stamp: *const sys::AudioTimeStamp,
-        in_bus_number: sys::UInt32,
-        in_number_of_frames: sys::UInt32,
-        io_data: *mut sys::AudioBufferList
-    ) -> sys::OSStatus;
-}
-
-impl<T> CallbackRender for Stream<T> {
     fn render(
         &self,
         io_action_flags: *mut sys::AudioUnitRenderActionFlags,
@@ -243,35 +206,52 @@ impl<T> CallbackRender for Stream<T> {
         };
         self.get_buffer_data(data)
     }
+
+    fn get_buffer_data (&self, data: AudioData<T>) -> sys::OSStatus {
+        let mut channel_buffers = Vec::new();
+        assert_eq!(data.buffers.len() as u32, self.parameters.channels);
+        for buffer in data.buffers {
+            assert_eq!(buffer.mNumberChannels, 1);
+            assert_eq!(
+                (data.frames * size_of::<T>()) as u32,
+                buffer.mDataByteSize
+            );
+            let ptr = buffer.mData as *mut T;
+            let len = data.frames;
+            let channel_buffer = unsafe { slice::from_raw_parts_mut(ptr, len) };
+            channel_buffers.push(channel_buffer);
+        }
+        (self.callback)(&mut channel_buffers);
+        sys::noErr as sys::OSStatus
+    }
+
+    // The *static* callback function that will be registered into
+    // `AURenderCallbackStruct` and called by underlying `AudioUnit`
+    // framework directly.
+    extern "C" fn audio_unit_callback(
+        in_ref_con: *mut c_void,
+        io_action_flags: *mut sys::AudioUnitRenderActionFlags,
+        in_time_stamp: *const sys::AudioTimeStamp,
+        in_bus_number: sys::UInt32,
+        in_number_of_frames: sys::UInt32,
+        io_data: *mut sys::AudioBufferList,
+    ) -> sys::OSStatus {
+        let render_callback_object = in_ref_con as *mut Self;
+        unsafe {
+            (*render_callback_object).render(
+                io_action_flags,
+                in_time_stamp,
+                in_bus_number,
+                in_number_of_frames,
+                io_data,
+            )
+        }
+    }
 }
 
-// The static callback function that will be registered by
-// `AURenderCallbackStruct` and called by underlying `AudioUnit` framework
-// directly.
-// see:
-// https://developer.apple.com/documentation/audiotoolbox/aurendercallbackstruct?language=objc
-// https://developer.apple.com/documentation/audiotoolbox/aurendercallback?language=objc
-//
-// The type `R: CallbackRender` is used to checked the `in_ref_con` is an
-// object that implements `render` function.
-extern "C" fn audio_unit_callback<R>(
-    in_ref_con: *mut c_void,
-    io_action_flags: *mut sys::AudioUnitRenderActionFlags,
-    in_time_stamp: *const sys::AudioTimeStamp,
-    in_bus_number: sys::UInt32,
-    in_number_of_frames: sys::UInt32,
-    io_data: *mut sys::AudioBufferList,
-) -> sys::OSStatus
-    where R: CallbackRender
-{
-    let render_callback_object = in_ref_con as *mut R;
-    unsafe {
-        (*render_callback_object).render(
-            io_action_flags,
-            in_time_stamp,
-            in_bus_number,
-            in_number_of_frames,
-            io_data,
-        )
+impl<T> Drop for Stream<T> {
+    fn drop(&mut self) {
+        assert!(self.stop().is_ok());
+        assert!(self.uninit_unit().is_ok());
     }
 }
