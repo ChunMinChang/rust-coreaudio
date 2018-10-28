@@ -66,7 +66,7 @@ impl Parameters {
         // The channels in the buffer is set to non-interleaved by
         // AudioFormatFlags here, hence the `bytes_per_frame` is same as
         // `bytes_per_frame` and `AudioBufferList.mNumberBuffers` received from
-        // callback `audio_unit_render_callback` is same as the number of
+        // callback `audio_unit_callback` is same as the number of
         // channels we have.
         let bytes_per_frame = byte_size;
         let bytes_per_packet = bytes_per_frame * frames_per_packet;
@@ -126,7 +126,7 @@ impl<T> Stream<T> {
         // in `set_callback` will be assigned to a dangling pointer and lead
         // a segment fault or bus error when trying to use `in_ref_con`, which
         // is a pointer pointing a freed memory chunk, in
-        // `audio_unit_render_callback`.
+        // `audio_unit_callback`.
         Ok(stm)
     }
 
@@ -170,7 +170,7 @@ impl<T> Stream<T> {
 
     fn set_callback(&mut self) -> Result<(), Error> {
         let callback_struct = sys::AURenderCallbackStruct {
-            inputProc: Some(audio_unit_render_callback::<Self>),
+            inputProc: Some(audio_unit_callback::<Self>),
             inputProcRefCon: self as *mut Self as *mut c_void,
         };
 
@@ -254,7 +254,7 @@ impl<T> CallbackRender for Stream<T> {
 //
 // The type `R: CallbackRender` is used to checked the `in_ref_con` is an
 // object that implements `render` function.
-extern "C" fn audio_unit_render_callback<R>(
+extern "C" fn audio_unit_callback<R>(
     in_ref_con: *mut c_void,
     io_action_flags: *mut sys::AudioUnitRenderActionFlags,
     in_time_stamp: *const sys::AudioTimeStamp,
