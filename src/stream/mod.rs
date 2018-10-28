@@ -211,7 +211,7 @@ impl<T> Drop for Stream<T> {
 
 // This trait will be used when
 // https://developer.apple.com/documentation/audiotoolbox/aurendercallback?language=objc
-trait RenderCallback {
+trait CallbackRender {
     fn render(
         &self,
         io_action_flags: *mut sys::AudioUnitRenderActionFlags,
@@ -222,7 +222,7 @@ trait RenderCallback {
     ) -> sys::OSStatus;
 }
 
-impl<T> RenderCallback for Stream<T> {
+impl<T> CallbackRender for Stream<T> {
     fn render(
         &self,
         io_action_flags: *mut sys::AudioUnitRenderActionFlags,
@@ -252,7 +252,7 @@ impl<T> RenderCallback for Stream<T> {
 // https://developer.apple.com/documentation/audiotoolbox/aurendercallbackstruct?language=objc
 // https://developer.apple.com/documentation/audiotoolbox/aurendercallback?language=objc
 //
-// The type `R: RenderCallback` is used to checked the `in_ref_con` is an
+// The type `R: CallbackRender` is used to checked the `in_ref_con` is an
 // object that implements `render` function.
 extern "C" fn audio_unit_render_callback<R>(
     in_ref_con: *mut c_void,
@@ -262,7 +262,7 @@ extern "C" fn audio_unit_render_callback<R>(
     in_number_of_frames: sys::UInt32,
     io_data: *mut sys::AudioBufferList,
 ) -> sys::OSStatus
-    where R: RenderCallback
+    where R: CallbackRender
 {
     let render_callback_object = in_ref_con as *mut R;
     unsafe {
