@@ -64,10 +64,11 @@ impl Parameters {
         let bits_per_channel = byte_size * 8;
         let frames_per_packet = 1;
         // The channels in the buffer is set to non-interleaved by
-        // AudioFormatFlags here, hence the `bytes_per_frame` is same as
-        // `bytes_per_frame` and `AudioBufferList.mNumberBuffers` received from
-        // callback `audio_unit_callback` is same as the number of
-        // channels we have.
+        // `to_format_flags`. Therefore,
+        // 1. `bytes_per_frame` is same as `byte_size`.
+        // 2. `AudioBufferList.mNumberBuffers` received in
+        //    `audio_unit_callback` is same as the number of
+        //    channels we have.
         let bytes_per_frame = byte_size;
         let bytes_per_packet = bytes_per_frame * frames_per_packet;
         sys::AudioStreamBasicDescription {
@@ -208,8 +209,8 @@ impl<T> Stream<T> {
     }
 
     fn get_buffer_data (&self, data: AudioData<T>) -> sys::OSStatus {
-        let mut channel_buffers = Vec::new();
         assert_eq!(data.buffers.len() as u32, self.parameters.channels);
+        let mut channel_buffers = Vec::new();
         for buffer in data.buffers {
             assert_eq!(buffer.mNumberChannels, 1);
             assert_eq!(
