@@ -11,8 +11,8 @@ use utils::get_default_device;
 // --------------------------
 #[test]
 fn test_is_valid() {
-  let unknown_device = AudioObject::new(kAudioObjectUnknown);
-  assert!(!unknown_device.is_valid());
+    let unknown_device = AudioObject::new(kAudioObjectUnknown);
+    assert!(!unknown_device.is_valid());
 }
 
 // get_label
@@ -230,7 +230,6 @@ fn test_get_source() {
     }
 }
 
-
 // in_scope
 // --------------------------
 #[test]
@@ -267,11 +266,15 @@ fn test_in_scope() {
 fn test_number_of_streams_with_invalid_id() {
     let unknown_device = AudioObject::new(kAudioObjectUnknown);
     assert_eq!(
-        unknown_device.number_of_streams(&Scope::Input,).unwrap_err(),
+        unknown_device
+            .number_of_streams(&Scope::Input,)
+            .unwrap_err(),
         Error::InvalidParameters(audio_object_utils::Error::BadObject)
     );
     assert_eq!(
-        unknown_device.number_of_streams(&Scope::Output).unwrap_err(),
+        unknown_device
+            .number_of_streams(&Scope::Output)
+            .unwrap_err(),
         Error::InvalidParameters(audio_object_utils::Error::BadObject)
     );
 }

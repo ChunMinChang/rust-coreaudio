@@ -1,27 +1,16 @@
 extern crate coreaudio_sys;
 
 use self::coreaudio_sys::{
-    kAudioDevicePropertyAvailableNominalSampleRates,
-    kAudioDevicePropertyBufferFrameSizeRange,
-    kAudioDevicePropertyDataSource,
-    kAudioDevicePropertyDataSourceNameForIDCFString,
-    kAudioDevicePropertyDeviceUID,
-    kAudioDevicePropertyLatency,
-    kAudioDevicePropertyNominalSampleRate,
-    kAudioDevicePropertyStreamConfiguration,
-    kAudioDevicePropertyStreams,
-    kAudioHardwarePropertyDefaultInputDevice,
-    kAudioHardwarePropertyDefaultOutputDevice,
-    kAudioHardwarePropertyDevices,
-    kAudioObjectPropertyManufacturer,
-    kAudioObjectPropertyName,
-    kAudioStreamPropertyLatency,
-    AudioObjectPropertyAddress,
+    kAudioDevicePropertyAvailableNominalSampleRates, kAudioDevicePropertyBufferFrameSizeRange,
+    kAudioDevicePropertyDataSource, kAudioDevicePropertyDataSourceNameForIDCFString,
+    kAudioDevicePropertyDeviceUID, kAudioDevicePropertyLatency,
+    kAudioDevicePropertyNominalSampleRate, kAudioDevicePropertyStreamConfiguration,
+    kAudioDevicePropertyStreams, kAudioHardwarePropertyDefaultInputDevice,
+    kAudioHardwarePropertyDefaultOutputDevice, kAudioHardwarePropertyDevices,
+    kAudioObjectPropertyElementMaster, kAudioObjectPropertyManufacturer, kAudioObjectPropertyName,
+    kAudioObjectPropertyScopeGlobal, kAudioObjectPropertyScopeInput,
+    kAudioObjectPropertyScopeOutput, kAudioStreamPropertyLatency, AudioObjectPropertyAddress,
     AudioObjectPropertySelector,
-    kAudioObjectPropertyElementMaster,
-    kAudioObjectPropertyScopeGlobal,
-    kAudioObjectPropertyScopeInput,
-    kAudioObjectPropertyScopeOutput,
 };
 
 use super::Scope;
@@ -66,10 +55,7 @@ impl From<Property> for AudioObjectPropertySelector {
     }
 }
 
-pub fn get_scope_property_address(
-    scope: &Scope,
-    p: Property
-) -> AudioObjectPropertyAddress {
+pub fn get_scope_property_address(scope: &Scope, p: Property) -> AudioObjectPropertyAddress {
     let scope = if scope == &Scope::Input {
         kAudioObjectPropertyScopeInput
     } else {
@@ -83,9 +69,7 @@ pub fn get_scope_property_address(
     }
 }
 
-pub fn get_global_property_address(
-    p: Property
-) -> AudioObjectPropertyAddress {
+pub fn get_global_property_address(p: Property) -> AudioObjectPropertyAddress {
     AudioObjectPropertyAddress {
         mSelector: p.into(),
         mScope: kAudioObjectPropertyScopeGlobal,

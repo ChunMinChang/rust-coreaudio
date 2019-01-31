@@ -34,12 +34,10 @@ fn test_get_devices() {
 // ------------------------------------
 #[test]
 fn test_get_all_devices() {
-    if get_default_device(&Scope::Input).is_ok() ||
-       get_default_device(&Scope::Output).is_ok() {
+    if get_default_device(&Scope::Input).is_ok() || get_default_device(&Scope::Output).is_ok() {
         assert!(!get_all_devices().unwrap().is_empty());
     }
 }
-
 
 // set_default_device
 // ------------------------------------

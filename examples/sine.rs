@@ -36,8 +36,10 @@ impl Synthesizer {
         }
     }
 
-    fn run<T> (&mut self, buffers: stream::CallbackArgs<T>)
-    where T: std::convert::From<SynthesizedData> {
+    fn run<T>(&mut self, buffers: stream::CallbackArgs<T>)
+    where
+        T: std::convert::From<SynthesizedData>,
+    {
         assert_eq!(self.channels, buffers.len() as u32);
         // buffers.len() is equal to channels!
         for (channel, buffer) in buffers.iter_mut().enumerate() {
@@ -61,7 +63,8 @@ const CHANNELS: u32 = 2;
 const RATE: f64 = 44_100.0;
 const VOLUME: f64 = 0.5;
 lazy_static! {
-    static ref SYNTHESIZER: Mutex<Synthesizer> = Mutex::new(Synthesizer::new(CHANNELS, RATE, VOLUME));
+    static ref SYNTHESIZER: Mutex<Synthesizer> =
+        Mutex::new(Synthesizer::new(CHANNELS, RATE, VOLUME));
 }
 
 fn fill_buffer_float(buffers: stream::CallbackArgs<f32>) {

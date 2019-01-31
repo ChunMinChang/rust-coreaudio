@@ -31,7 +31,7 @@ impl fmt::Debug for Error {
             Error::InvalidComponentID => "Using the invalid audio component.",
             Error::NoComponentFound => "No audio component matching with provided settings.",
             Error::PropertyNotWritable => "Trying to write a non-writable property.",
-            Error::Uninitialized => "Trying to run an uninitialized AudioUnit."
+            Error::Uninitialized => "Trying to run an uninitialized AudioUnit.",
         };
         write!(f, "{}", printable)
     }
@@ -39,7 +39,7 @@ impl fmt::Debug for Error {
 
 pub enum Element {
     Output = 0,
-    Input  = 1,
+    Input = 1,
 }
 
 // Public APIs
@@ -153,7 +153,7 @@ fn get_property_info(
         scope,
         element as sys::AudioUnitElement,
         &mut size,
-        &mut writable
+        &mut writable,
     );
     convert_to_result(status)?;
     Ok((size, writable))
@@ -173,7 +173,7 @@ fn get_property<T>(
         scope,
         element as sys::AudioUnitElement,
         &mut data,
-        &mut size
+        &mut size,
     );
     convert_to_result(status)?;
     Ok(data)
@@ -193,7 +193,7 @@ fn set_property<T>(
         scope,
         element as sys::AudioUnitElement,
         data,
-        size
+        size,
     );
     convert_to_result(status)
 }
@@ -281,7 +281,7 @@ fn audio_unit_set_property<T>(
             scope,
             element,
             data as *const c_void,
-            size as sys::UInt32
+            size as sys::UInt32,
         )
     }
 }

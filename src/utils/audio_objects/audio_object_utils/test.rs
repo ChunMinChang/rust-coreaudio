@@ -32,32 +32,32 @@ fn test_get_property_data_with_invalid_id() {
         get_property_data::<sys::AudioObjectID>(
             sys::kAudioObjectUnknown,
             &DEFAULT_INPUT_DEVICE_PROPERTY_ADDRESS,
-        ).unwrap_err(),
+        )
+        .unwrap_err(),
         Error::BadObject
     );
     assert_eq!(
         get_property_data::<sys::AudioObjectID>(
             sys::kAudioObjectUnknown,
             &DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS,
-        ).unwrap_err(),
+        )
+        .unwrap_err(),
         Error::BadObject
     );
 }
 
 #[test]
 fn test_get_property_data() {
-    assert!(
-        get_property_data::<sys::AudioObjectID>(
-            sys::kAudioObjectSystemObject,
-            &DEFAULT_INPUT_DEVICE_PROPERTY_ADDRESS,
-        ).is_ok()
-    );
-    assert!(
-        get_property_data::<sys::AudioObjectID>(
-            sys::kAudioObjectSystemObject,
-            &DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS,
-        ).is_ok()
-    );
+    assert!(get_property_data::<sys::AudioObjectID>(
+        sys::kAudioObjectSystemObject,
+        &DEFAULT_INPUT_DEVICE_PROPERTY_ADDRESS,
+    )
+    .is_ok());
+    assert!(get_property_data::<sys::AudioObjectID>(
+        sys::kAudioObjectSystemObject,
+        &DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS,
+    )
+    .is_ok());
 }
 
 // get_property_data_with_ref
@@ -71,7 +71,8 @@ fn test_get_property_data_with_ref_with_invalid_id() {
             sys::kAudioObjectUnknown,
             &DEFAULT_INPUT_DEVICE_PROPERTY_ADDRESS,
             &mut id,
-        ).unwrap_err(),
+        )
+        .unwrap_err(),
         Error::BadObject
     );
     assert_eq!(
@@ -79,7 +80,8 @@ fn test_get_property_data_with_ref_with_invalid_id() {
             sys::kAudioObjectUnknown,
             &DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS,
             &mut id,
-        ).unwrap_err(),
+        )
+        .unwrap_err(),
         Error::BadObject
     );
 }
@@ -87,20 +89,18 @@ fn test_get_property_data_with_ref_with_invalid_id() {
 #[test]
 fn test_get_property_data_with_ref() {
     let mut id: sys::AudioObjectID = sys::kAudioObjectUnknown;
-    assert!(
-        get_property_data_with_ref(
-            sys::kAudioObjectSystemObject,
-            &DEFAULT_INPUT_DEVICE_PROPERTY_ADDRESS,
-            &mut id,
-        ).is_ok()
-    );
-    assert!(
-        get_property_data_with_ref(
-            sys::kAudioObjectSystemObject,
-            &DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS,
-            &mut id,
-        ).is_ok()
-    );
+    assert!(get_property_data_with_ref(
+        sys::kAudioObjectSystemObject,
+        &DEFAULT_INPUT_DEVICE_PROPERTY_ADDRESS,
+        &mut id,
+    )
+    .is_ok());
+    assert!(get_property_data_with_ref(
+        sys::kAudioObjectSystemObject,
+        &DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS,
+        &mut id,
+    )
+    .is_ok());
 }
 
 // get_property_data_size
@@ -112,32 +112,32 @@ fn test_get_property_data_size_with_invalid_id() {
         get_property_data_size(
             sys::kAudioObjectUnknown,
             &DEFAULT_INPUT_DEVICE_PROPERTY_ADDRESS,
-        ).unwrap_err(),
+        )
+        .unwrap_err(),
         Error::BadObject
     );
     assert_eq!(
         get_property_data_size(
             sys::kAudioObjectUnknown,
             &DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS,
-        ).unwrap_err(),
+        )
+        .unwrap_err(),
         Error::BadObject
     );
 }
 
 #[test]
 fn test_get_property_data_size() {
-    assert!(
-        get_property_data_size(
-            sys::kAudioObjectSystemObject,
-            &DEFAULT_INPUT_DEVICE_PROPERTY_ADDRESS,
-        ).is_ok()
-    );
-    assert!(
-        get_property_data_size(
-            sys::kAudioObjectSystemObject,
-            &DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS,
-        ).is_ok()
-    );
+    assert!(get_property_data_size(
+        sys::kAudioObjectSystemObject,
+        &DEFAULT_INPUT_DEVICE_PROPERTY_ADDRESS,
+    )
+    .is_ok());
+    assert!(get_property_data_size(
+        sys::kAudioObjectSystemObject,
+        &DEFAULT_OUTPUT_DEVICE_PROPERTY_ADDRESS,
+    )
+    .is_ok());
 }
 
 // get_property_array
@@ -149,32 +149,32 @@ fn test_get_property_array_with_invalid_id() {
         get_property_array::<sys::AudioObjectID>(
             sys::kAudioObjectUnknown,
             &DEVICE_PROPERTY_ADDRESS,
-        ).unwrap_err(),
+        )
+        .unwrap_err(),
         Error::BadObject
     );
     assert_eq!(
         get_property_array::<sys::AudioObjectID>(
             sys::kAudioObjectUnknown,
             &DEVICE_PROPERTY_ADDRESS,
-        ).unwrap_err(),
+        )
+        .unwrap_err(),
         Error::BadObject
     );
 }
 
 #[test]
 fn test_get_property_array() {
-    assert!(
-        get_property_array::<sys::AudioObjectID>(
-            sys::kAudioObjectSystemObject,
-            &DEVICE_PROPERTY_ADDRESS,
-        ).is_ok()
-    );
-    assert!(
-        get_property_array::<sys::AudioObjectID>(
-            sys::kAudioObjectSystemObject,
-            &DEVICE_PROPERTY_ADDRESS,
-        ).is_ok()
-    );
+    assert!(get_property_array::<sys::AudioObjectID>(
+        sys::kAudioObjectSystemObject,
+        &DEVICE_PROPERTY_ADDRESS,
+    )
+    .is_ok());
+    assert!(get_property_array::<sys::AudioObjectID>(
+        sys::kAudioObjectSystemObject,
+        &DEVICE_PROPERTY_ADDRESS,
+    )
+    .is_ok());
 }
 
 // Tests for Private Functions

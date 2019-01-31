@@ -40,9 +40,7 @@ impl Format {
             Format::S16LE => sys::kAudioFormatFlagIsSignedInteger,
             Format::F32LE => sys::kAudioFormatFlagIsFloat,
         };
-        flags |
-        sys::kLinearPCMFormatFlagIsPacked |
-        sys::kLinearPCMFormatFlagIsNonInterleaved
+        flags | sys::kLinearPCMFormatFlagIsPacked | sys::kLinearPCMFormatFlagIsNonInterleaved
     }
 }
 
@@ -90,8 +88,8 @@ impl Parameters {
 // from functions to functions.
 struct AudioData<T> {
     buffers: &'static mut [sys::AudioBuffer], // The list of audio buffers.
-    frames: usize, // The number of frames in each channel.
-    data_type: PhantomData<T>
+    frames: usize,                            // The number of frames in each channel.
+    data_type: PhantomData<T>,
 }
 
 pub type CallbackArgs<'a, T> = &'a mut [&'a mut [T]];
@@ -113,11 +111,20 @@ pub struct Stream<T> {
 // https://developer.apple.com/library/archive/technotes/tn2091/_index.html
 // This gives idea about how we set the audio stream here.
 impl<T> Stream<T> {
-    pub fn new(channels: u32, format: Format, rate: f64, callback: Callback<T>) -> Result<Self, Error> {
+    pub fn new(
+        channels: u32,
+        format: Format,
+        rate: f64,
+        callback: Callback<T>,
+    ) -> Result<Self, Error> {
         assert_eq!(format.byte_size(), size_of::<T>());
         let parameters = Parameters::new(channels, format, rate);
         let unit = AudioUnit::new()?;
-        let stm = Stream { callback, parameters, unit };
+        let stm = Stream {
+            callback,
+            parameters,
+            unit,
+        };
         // Don't initialize the stream here!
         // The memory address of `stm` is different from `x`
         // where x is returned `stm` outside by `x = Stream::new(...)`.
@@ -193,7 +200,7 @@ impl<T> Stream<T> {
         in_time_stamp: *const sys::AudioTimeStamp,
         in_bus_number: sys::UInt32,
         in_number_of_frames: sys::UInt32,
-        io_data: *mut sys::AudioBufferList
+        io_data: *mut sys::AudioBufferList,
     ) -> sys::OSStatus {
         let buffers = unsafe {
             let ptr = (*io_data).mBuffers.as_ptr() as *mut sys::AudioBuffer;
@@ -208,15 +215,12 @@ impl<T> Stream<T> {
         self.get_buffer_data(data)
     }
 
-    fn get_buffer_data (&self, data: AudioData<T>) -> sys::OSStatus {
+    fn get_buffer_data(&self, data: AudioData<T>) -> sys::OSStatus {
         assert_eq!(data.buffers.len() as u32, self.parameters.channels);
         let mut channel_buffers = Vec::new();
         for buffer in data.buffers {
             assert_eq!(buffer.mNumberChannels, 1);
-            assert_eq!(
-                (data.frames * size_of::<T>()) as u32,
-                buffer.mDataByteSize
-            );
+            assert_eq!((data.frames * size_of::<T>()) as u32, buffer.mDataByteSize);
             let ptr = buffer.mData as *mut T;
             let len = data.frames;
             let channel_buffer = unsafe { slice::from_raw_parts_mut(ptr, len) };

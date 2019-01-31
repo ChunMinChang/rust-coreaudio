@@ -43,10 +43,7 @@ impl DeviceInfo {
 }
 
 fn print_devices_info() {
-    let scopes = vec![
-        utils::Scope::Input,
-        utils::Scope::Output
-    ];
+    let scopes = vec![utils::Scope::Input, utils::Scope::Output];
 
     for scope in &scopes {
         print_devices_info_in_scope(scope);
@@ -66,10 +63,7 @@ fn print_devices_info_in_scope(scope: &utils::Scope) {
     }
 }
 
-fn get_device_info(
-    device: &utils::AudioObject,
-    scope: &utils::Scope
-) -> Option<DeviceInfo> {
+fn get_device_info(device: &utils::AudioObject, scope: &utils::Scope) -> Option<DeviceInfo> {
     if !device.in_scope(scope).unwrap() {
         return None;
     }
@@ -94,12 +88,16 @@ fn print_device_info(info: &DeviceInfo) {
     println!("\tmanufacturer: {}", info.manufacturer);
     println!("\tchannels: {}", info.channels);
     println!("\trate: {}", info.rate);
-    println!("\trate range: {} - {}", info.rate_range.0, info.rate_range.1);
+    println!(
+        "\trate range: {} - {}",
+        info.rate_range.0, info.rate_range.1
+    );
     println!("\tdevice latency: {}", info.device_latency);
     println!("\tstream latency: {}", info.stream_latency);
-    println!("\tbuffer frame size range: {} - {}",
-             info.buf_frame_size_range.0,
-             info.buf_frame_size_range.1);
+    println!(
+        "\tbuffer frame size range: {} - {}",
+        info.buf_frame_size_range.0, info.buf_frame_size_range.1
+    );
 }
 
 fn print_demarcation(scope: &utils::Scope) {
@@ -124,10 +122,12 @@ fn change_default_device(scope: &utils::Scope) {
         .unwrap();
     assert!(utils::set_default_device(&new_device, scope).is_ok());
 
-    println!("{} device is changed from {:?} to {:?}!",
-             to_string(scope),
-             current_device.get_label(scope).unwrap(),
-             new_device.get_label(scope).unwrap());
+    println!(
+        "{} device is changed from {:?} to {:?}!",
+        to_string(scope),
+        current_device.get_label(scope).unwrap(),
+        new_device.get_label(scope).unwrap()
+    );
 }
 
 fn to_string(scope: &utils::Scope) -> String {

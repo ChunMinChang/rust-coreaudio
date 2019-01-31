@@ -2,7 +2,9 @@ extern crate core_foundation_sys;
 extern crate coreaudio_sys;
 
 use self::core_foundation_sys::base::{Boolean, CFIndex, CFRange, CFRelease};
-use self::core_foundation_sys::string::{kCFStringEncodingUTF8, CFStringGetBytes, CFStringGetLength, CFStringRef};
+use self::core_foundation_sys::string::{
+    kCFStringEncodingUTF8, CFStringGetBytes, CFStringGetLength, CFStringRef,
+};
 use std::fmt; // For fmt::{Debug, Formatter, Result}
 use std::os::raw::c_void;
 use std::ptr; // For ptr::null_mut()
@@ -125,7 +127,7 @@ fn get_btye_array(string_ref: CFStringRef) -> Result<Vec<u8>, Error> {
             false as Boolean,
             buffer.as_mut_ptr(),
             size,
-            ptr::null_mut() as* mut CFIndex,
+            ptr::null_mut() as *mut CFIndex,
         )
     };
     if converted_chars <= 0 {
