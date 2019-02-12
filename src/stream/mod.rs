@@ -202,9 +202,11 @@ impl<T> Stream<T> {
         in_number_of_frames: sys::UInt32,
         io_data: *mut sys::AudioBufferList,
     ) -> sys::OSStatus {
+        // See https://gist.github.com/ChunMinChang/e8909506cfca774f623fc375fc8ee1d2
+        // to know why it's necessary to use `&mut` to get the data inside `io_data`.
         let buffers = unsafe {
-            let ptr = (*io_data).mBuffers.as_ptr() as *mut sys::AudioBuffer;
-            let len = (*io_data).mNumberBuffers as usize; // interleaved channels.
+            let ptr = (&mut (*io_data)).mBuffers.as_ptr() as *mut sys::AudioBuffer;
+            let len = (&mut (*io_data)).mNumberBuffers as usize; // interleaved channels.
             slice::from_raw_parts_mut(ptr, len)
         };
         let data = AudioData {
