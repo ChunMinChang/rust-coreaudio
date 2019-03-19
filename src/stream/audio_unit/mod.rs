@@ -211,7 +211,7 @@ fn find_next_component(
 }
 
 fn get_new_instance(component: sys::AudioComponent) -> Result<sys::AudioComponentInstance, Error> {
-    let mut instance: sys::AudioComponentInstance = unsafe { mem::uninitialized() };
+    let mut instance: sys::AudioComponentInstance = ptr::null_mut();
     let status = audio_component_instance_new(component, &mut instance);
     convert_to_result(status)?;
     Ok(instance)
