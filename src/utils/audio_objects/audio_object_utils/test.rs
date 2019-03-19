@@ -153,23 +153,10 @@ fn test_get_property_array_with_invalid_id() {
         .unwrap_err(),
         Error::BadObject
     );
-    assert_eq!(
-        get_property_array::<sys::AudioObjectID>(
-            sys::kAudioObjectUnknown,
-            &DEVICE_PROPERTY_ADDRESS,
-        )
-        .unwrap_err(),
-        Error::BadObject
-    );
 }
 
 #[test]
 fn test_get_property_array() {
-    assert!(get_property_array::<sys::AudioObjectID>(
-        sys::kAudioObjectSystemObject,
-        &DEVICE_PROPERTY_ADDRESS,
-    )
-    .is_ok());
     assert!(get_property_array::<sys::AudioObjectID>(
         sys::kAudioObjectSystemObject,
         &DEVICE_PROPERTY_ADDRESS,
