@@ -23,6 +23,7 @@ Make sure *Rust* and *Cargo* are installed.
     - [directly get inner element data from C API][gist-same-size](since their sizes are same!)
     - [CoreAudio][gist-audioobject]
 - **Tests**
+  - Fix non-cross-device tests
   - Unit test for *audio_unit* and *stream* modules.
   - Integration test for using *stream* and *utils(devices)* at the same time.
   - Enable AppVeyor
