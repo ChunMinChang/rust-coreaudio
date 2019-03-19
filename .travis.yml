@@ -5,3 +5,9 @@ rust:
   - nightly
 os:
   - osx
+before_script:
+  - rustc --version
+  - cargo --version
+script:
+  - cargo build --verbose
+  - cargo test --verbose
