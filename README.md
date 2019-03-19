@@ -1,5 +1,7 @@
 # Rust CoreAudio
 
+[![Build Status](https://travis-ci.org/ChunMinChang/rust-coreaudio.svg?branch=master)](https://travis-ci.org/ChunMinChang/rust-coreaudio)
+
 This is a draft to play CoreAudio APIs in *Rust*. The aim for this project is to
 1. practice *Rust*
 2. get familiar with calling *C* APIs in *Rust*
@@ -23,6 +25,7 @@ Make sure *Rust* and *Cargo* are installed.
 - **Tests**
   - Unit test for *audio_unit* and *stream* modules.
   - Integration test for using *stream* and *utils(devices)* at the same time.
+  - Enable AppVeyor
 
 ## References
 - [RustAudio/coreaudio-rs][RustAudio-coreaudio-rs]
