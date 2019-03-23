@@ -157,11 +157,14 @@ fn test_get_property_array_with_invalid_id() {
 
 #[test]
 fn test_get_property_array() {
-    assert!(get_property_array::<sys::AudioObjectID>(
+    let result = get_property_array::<sys::AudioObjectID>(
         sys::kAudioObjectSystemObject,
         &DEVICE_PROPERTY_ADDRESS,
-    )
-    .is_ok());
+    );
+    // If there is no available device on the platform.
+    if result.is_err() {
+        assert_eq!(result.unwrap_err(), Error::SizeIsZero);
+    }
 }
 
 // Tests for Private Functions
